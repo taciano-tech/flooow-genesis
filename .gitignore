@@ -1,0 +1,18 @@
+# Gradle
+.gradle/
+**/.gradle/
+
+# Build outputs
+build/
+**/build/
+
+# IntelliJ / VS Code
+.idea/
+*.iml
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
