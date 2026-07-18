@@ -9,7 +9,7 @@ data class Hypothesis(
     val statement: String,
     val confidence: Confidence,
     val createdAt: Timestamp
-) {
+) : io.flooow.kernel.model.Hypothesis {
     init {
         require(statement.isNotBlank()) {
             "Hypothesis statement must not be blank"

@@ -10,7 +10,7 @@ data class Judgment(
     val conclusion: String,
     val confidence: Confidence,
     val createdAt: Timestamp
-) {
+) : io.flooow.kernel.model.Judgment {
     init {
         require(conclusion.isNotBlank()) {
             "Judgment conclusion must not be blank"
