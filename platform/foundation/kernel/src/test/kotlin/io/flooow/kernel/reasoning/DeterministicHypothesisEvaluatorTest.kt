@@ -23,7 +23,7 @@ class DeterministicHypothesisEvaluatorTest {
         Timestamp.parse("2026-07-19T10:00:00Z")
 
     @Test
-    fun `creates a deterministic judgment using aggregated evidence`() {
+    fun `creates a deterministic judgment using confidence policy`() {
         val hypothesis =
             Hypothesis(
                 id = Identifier("hypothesis-001"),
@@ -46,20 +46,29 @@ class DeterministicHypothesisEvaluatorTest {
                 )
             )
 
-        val aggregatedConfidence =
-            Confidence(0.65)
+        val aggregatedEvidence =
+            AggregatedEvidence(
+                evidenceSet = evidenceSet,
+                confidence = Confidence(0.65)
+            )
+
+        val judgmentConfidence =
+            Confidence(0.72)
 
         val evidenceAggregator =
             RecordingEvidenceAggregator(
-                result = AggregatedEvidence(
-                    evidenceSet = evidenceSet,
-                    confidence = aggregatedConfidence
-                )
+                result = aggregatedEvidence
+            )
+
+        val confidencePolicy =
+            RecordingConfidencePolicy(
+                result = judgmentConfidence
             )
 
         val evaluator =
             DeterministicHypothesisEvaluator(
                 evidenceAggregator = evidenceAggregator,
+                confidencePolicy = confidencePolicy,
                 clock = clock
             )
 
@@ -74,6 +83,16 @@ class DeterministicHypothesisEvaluatorTest {
             evidenceAggregator.receivedEvidenceSet
         )
 
+        assertSame(
+            hypothesis,
+            confidencePolicy.receivedHypothesis
+        )
+
+        assertSame(
+            aggregatedEvidence,
+            confidencePolicy.receivedAggregatedEvidence
+        )
+
         assertEquals(
             Identifier("judgment-hypothesis-001"),
             judgment.id
@@ -85,7 +104,7 @@ class DeterministicHypothesisEvaluatorTest {
         )
 
         assertEquals(
-            aggregatedConfidence,
+            judgmentConfidence,
             judgment.confidence
         )
 
@@ -111,6 +130,26 @@ class DeterministicHypothesisEvaluatorTest {
             evidenceSet: EvidenceSet
         ): AggregatedEvidence {
             receivedEvidenceSet = evidenceSet
+            return result
+        }
+    }
+
+    private class RecordingConfidencePolicy(
+        private val result: Confidence
+    ) : ConfidencePolicy {
+
+        var receivedHypothesis: Hypothesis? = null
+            private set
+
+        var receivedAggregatedEvidence: AggregatedEvidence? = null
+            private set
+
+        override fun determine(
+            hypothesis: Hypothesis,
+            aggregatedEvidence: AggregatedEvidence
+        ): Confidence {
+            receivedHypothesis = hypothesis
+            receivedAggregatedEvidence = aggregatedEvidence
             return result
         }
     }
