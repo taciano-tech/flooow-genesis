@@ -5,22 +5,26 @@ import io.flooow.kernel.language.Timestamp
 import java.time.Clock
 
 /**
- * Produces deterministic judgments using only the supplied hypothesis
- * and evidence set.
+ * Produces deterministic judgments from aggregated evidence.
  */
 class DeterministicHypothesisEvaluator(
+    private val evidenceAggregator: EvidenceAggregator,
     private val clock: Clock = Clock.systemUTC()
 ) : HypothesisEvaluator {
 
     override fun evaluate(
         hypothesis: Hypothesis,
         evidenceSet: EvidenceSet
-    ): Judgment =
-        Judgment(
+    ): Judgment {
+        val aggregatedEvidence =
+            evidenceAggregator.aggregate(evidenceSet)
+
+        return Judgment(
             id = Identifier("judgment-${hypothesis.id}"),
             hypothesisId = hypothesis.id,
             conclusion = "Evidence supports the hypothesis.",
-            confidence = hypothesis.confidence,
+            confidence = aggregatedEvidence.confidence,
             createdAt = Timestamp.now(clock)
         )
+    }
 }
