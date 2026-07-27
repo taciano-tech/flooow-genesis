@@ -59,7 +59,10 @@ class ReasoningModuleTest {
 
         val engine =
             ReasoningModule.deterministic(
-                clock = clock
+                configuration =
+                    ReasoningConfiguration(
+                        clock = clock
+                    )
             )
 
         val result =
@@ -125,12 +128,15 @@ class ReasoningModuleTest {
 
         val engine =
             ReasoningModule.deterministic(
-                confidencePolicy =
-                    WeightedConfidencePolicy(
-                        hypothesisWeight = 0.25,
-                        aggregatedEvidenceWeight = 0.75
-                    ),
-                clock = clock
+                configuration =
+                    ReasoningConfiguration(
+                        confidencePolicy =
+                            WeightedConfidencePolicy(
+                                hypothesisWeight = 0.25,
+                                aggregatedEvidenceWeight = 0.75
+                            ),
+                        clock = clock
+                    )
             )
 
         val result =

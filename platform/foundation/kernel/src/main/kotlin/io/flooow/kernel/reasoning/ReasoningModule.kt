@@ -1,6 +1,5 @@
 package io.flooow.kernel.reasoning
 
-import java.time.Clock
 
 /**
  * Provides official composition roots for reasoning pipelines.
@@ -17,9 +16,8 @@ object ReasoningModule {
      * from aggregated evidence.
      */
     fun deterministic(
-        confidencePolicy: ConfidencePolicy =
-            AggregatedEvidenceConfidencePolicy(),
-        clock: Clock = Clock.systemUTC()
+        configuration: ReasoningConfiguration =
+            ReasoningConfiguration()
     ): ReasoningEngine {
         val evidenceAggregator =
             DeterministicEvidenceAggregator()
@@ -27,14 +25,14 @@ object ReasoningModule {
         val hypothesisEvaluator =
             DeterministicHypothesisEvaluator(
                 evidenceAggregator = evidenceAggregator,
-                confidencePolicy = confidencePolicy,
-                clock = clock
+                confidencePolicy = configuration.confidencePolicy,
+                clock = configuration.clock
             )
 
         val evaluationStrategy =
             EvaluatorBasedStrategy(
                 evaluator = hypothesisEvaluator,
-                clock = clock
+                clock = configuration.clock
             )
 
         return DefaultReasoningEngine(
