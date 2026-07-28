@@ -97,6 +97,139 @@ It is considered one of the foundational concepts of the Flooow Computational Mo
 
 ---
 
+
 ## Kernel Status
 
-✔ Kernel Primitive
+◯ Candidate Kernel Primitive
+---
+
+# State
+
+## Definition
+
+A State is a temporally bounded representation of the conditions attributable to one or more entities within a defined context.
+
+State answers the question:
+
+> How is an entity at a specific instant or during a specific interval?
+
+A State may describe properties, conditions, classifications and relationships that are considered applicable to an entity at a given temporal reference.
+
+---
+
+## Identity and Change
+
+Entity and State are distinct concepts.
+
+An Entity preserves identity across time.
+
+A State represents how that Entity is situated at a particular moment or interval.
+
+For example:
+
+- `Order #48291` is an Entity.
+- `Pending Payment` is one of its possible States.
+- `Paid` is another possible State.
+- The Order remains the same Entity while its State changes.
+
+A change in State does not necessarily create a new Entity.
+
+---
+
+## State and Observation
+
+State is not the same as Observation.
+
+A State represents a condition attributed to an Entity.
+
+An Observation represents a recorded claim, measurement or perception about that condition.
+
+For example:
+
+- State: `Machine temperature = 82°C`
+- Observation: `Sensor A reported 82°C at 14:32`
+
+Multiple observations may support, contradict or refine the same State.
+
+State may therefore be reconstructed, inferred or updated from observations without becoming identical to them.
+
+---
+
+## Temporal Reference
+
+Every State requires a temporal reference.
+
+A temporal reference may represent:
+
+- An instant
+- An interval
+- The current moment
+- A historical period
+- A projected future period
+
+Without temporal context, two apparently contradictory States may both be valid.
+
+For example:
+
+- `Order #48291 was Pending at 10:30`
+- `Order #48291 was Paid at 10:31`
+
+These States are not contradictory because they apply to different temporal references.
+
+---
+
+## Universality
+
+The concept of State is universal.
+
+Every organizational domain reasons about conditions that vary over time.
+
+Examples include:
+
+- The payment status of an Invoice
+- The location of a Shipment
+- The availability of a Product
+- The balance of a Bank Account
+- The operational condition of a Machine
+- The employment status of a Person
+- The confidence level of a Hypothesis
+- The progress of a Goal
+
+Although the properties differ across domains, all represent conditions attributable to entities within a temporal context.
+
+---
+
+## What State is NOT
+
+State is not an event.
+
+An event represents something that happened.
+
+State represents a condition that applies during a temporal reference.
+
+State is not an observation.
+
+An observation records or communicates information about a State.
+
+State is not necessarily stored directly.
+
+It may be persisted, reconstructed from events, inferred from observations or projected by a model.
+
+The Flooow Computational Model defines State independently from any persistence strategy.
+
+---
+
+## Dependencies
+
+State depends on:
+
+- Entity
+- Temporal Reference
+
+State may be established or revised through Observation, but Observation is not required for State to exist conceptually.
+
+---
+
+## Kernel Status
+
+◯ Candidate Kernel Primitive
