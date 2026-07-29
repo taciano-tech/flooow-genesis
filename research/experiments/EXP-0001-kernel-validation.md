@@ -22,19 +22,19 @@ This experiment establishes the first evidence-driven validation cycle of the Fl
 
 ## 3. Research Question
 
-Can the current Kernel Ontology represent a real organizational workflow while preserving determinism, traceability, explainability, and consistent state transitions?
+Can the current Kernel represent a real organizational reasoning workflow through the pipeline Observation → Evidence → Hypothesis → Judgment → Decision while preserving determinism, traceability, and explainability?
 
 ---
 
 ## 4. Hypothesis
 
-The current Kernel primitives are sufficient to represent a real organizational workflow without requiring additional universal primitives.
+The current Kernel primitives are sufficient to represent and execute a real organizational reasoning workflow through Observation, Evidence, Hypothesis, Judgment, and Decision without requiring additional universal primitives.
 
 ---
 
 ## 5. Null Hypothesis
 
-The current Kernel primitives are not sufficient to represent a real organizational workflow without requiring additional universal primitives.
+The current Kernel primitives are not sufficient to represent and execute a real organizational reasoning workflow through Observation, Evidence, Hypothesis, Judgment, and Decision without requiring additional universal primitives.
 
 ---
 
@@ -64,14 +64,23 @@ The application is an experimental instrument, not a source of Kernel concepts.
 
 ---
 
-## 8. Kernel Concepts Under Validation
+## 8. Kernel Reasoning Pipeline Under Validation
 
-The experiment must exercise the Kernel concepts currently identified as necessary for the workflow:
+The experiment must execute and validate the complete reasoning pipeline currently implemented by the Kernel:
 
-- Entity
-- Event
-- State
-- Process
+1. Observation
+2. Evidence
+3. Hypothesis
+4. Judgment
+5. Decision
+
+This pipeline spans the Kernel model layer and the Kernel reasoning layer, preserving the separation between organizational concepts and reasoning responsibilities.
+
+The experiment must also exercise the foundational language concepts required by this pipeline:
+
+- Identifier
+- Confidence
+- Timestamp
 
 No additional primitive may be introduced during the experiment without first recording evidence of insufficiency.
 
@@ -81,11 +90,12 @@ No additional primitive may be introduced during the experiment without first re
 
 The independent variables are:
 
-- workflow scenario;
-- sequence of accepted events;
-- initial entity state;
-- process execution path;
-- valid and invalid transition attempts.
+- organizational scenario;
+- recorded observations;
+- evidence confidence values;
+- hypothesis statement;
+- hypothesis initial confidence;
+- evidence supplied to the reasoning engine.
 
 ---
 
@@ -93,12 +103,13 @@ The independent variables are:
 
 The dependent variables are:
 
-- resulting entity state;
-- generated events;
-- process outcome;
+- generated judgment conclusion;
+- generated judgment confidence;
+- evaluated evidence set;
+- resulting decision;
+- evidence references preserved by the decision;
 - execution trace;
-- invariant validation result;
-- determinism of repeated executions.
+- determinism of repeated evaluations.
 
 ---
 
@@ -107,10 +118,12 @@ The dependent variables are:
 The following conditions must remain constant:
 
 - Kernel version;
-- application version;
-- workflow definition;
-- initial state;
-- event sequence;
+- experimental application version;
+- reasoning configuration;
+- system clock;
+- hypothesis;
+- observation set;
+- evidence set;
 - execution environment;
 - test dataset.
 
@@ -120,15 +133,16 @@ The following conditions must remain constant:
 
 The experiment shall:
 
-1. define one minimal organizational workflow;
-2. represent its actors and objects as entities;
-3. express relevant occurrences as events;
-4. model valid state transitions;
-5. execute the workflow through a process;
-6. reject invalid transitions;
-7. record the complete execution trace;
-8. repeat the same execution using the same inputs;
-9. compare all resulting states, events, and decisions.
+1. define one minimal organizational reasoning scenario;
+2. record relevant organizational perceptions as observations;
+3. derive evidence from those observations;
+4. define a hypothesis to be evaluated;
+5. execute the hypothesis evaluation through the deterministic reasoning engine;
+6. obtain the resulting judgment;
+7. create a decision grounded in the evaluated evidence;
+8. record the complete reasoning trace;
+9. repeat the same evaluation using identical inputs and configuration;
+10. compare the resulting judgments, evaluated evidence, and decisions.
 
 The application must not contain alternative abstractions that duplicate Kernel responsibilities.
 
@@ -138,11 +152,12 @@ The application must not contain alternative abstractions that duplicate Kernel 
 
 The experiment should produce evidence of:
 
-- deterministic execution;
-- complete traceability;
-- explainable decisions;
-- consistent state transitions;
-- invariant enforcement;
+- deterministic hypothesis evaluation;
+- complete traceability from observation to decision;
+- explainable judgment formation;
+- decisions grounded in recorded evidence;
+- preservation of evidence references;
+- Kernel invariant enforcement;
 - reproducible outcomes;
 - clear separation between Kernel and application concerns.
 
@@ -153,11 +168,13 @@ The experiment should produce evidence of:
 Evidence shall include:
 
 - executable automated tests;
-- input fixtures;
-- expected outputs;
-- resulting state snapshots;
-- emitted event records;
-- execution traces;
+- observation fixtures;
+- evidence fixtures;
+- hypothesis fixtures;
+- expected judgments;
+- expected decisions;
+- reasoning execution traces;
+- determinism comparison records;
 - invariant violation records;
 - build and test results.
 
@@ -169,12 +186,14 @@ Every evidence item must be associated with the experiment version and the sourc
 
 The experiment succeeds when all of the following conditions are satisfied:
 
-- the workflow is completely represented;
+- the organizational reasoning scenario is completely represented;
+- the full Observation → Evidence → Hypothesis → Judgment → Decision pipeline is executed;
 - no additional Kernel primitive is required;
-- valid transitions produce the expected states;
-- invalid transitions are rejected;
-- identical inputs produce identical outputs;
-- the complete execution is traceable;
+- observations are traceably referenced by evidence;
+- the judgment references the evaluated hypothesis;
+- the decision references the evidence supporting it;
+- identical inputs and configuration produce identical semantic outputs;
+- the complete reasoning execution is traceable;
 - decisions can be explained from recorded evidence;
 - Kernel invariants remain valid;
 - another engineer can reproduce the result.
@@ -185,10 +204,12 @@ The experiment succeeds when all of the following conditions are satisfied:
 
 The experiment fails when any of the following conditions occurs:
 
-- an essential concept cannot be represented;
-- identical inputs produce different outputs;
-- the execution cannot be completely traced;
-- a state transition cannot be explained;
+- an essential reasoning concept cannot be represented;
+- the Observation → Evidence → Hypothesis → Judgment → Decision pipeline cannot be completed;
+- identical inputs and configuration produce different semantic outputs;
+- the reasoning execution cannot be completely traced;
+- a judgment cannot be explained from the evaluated evidence;
+- a decision cannot be traced to its supporting evidence;
 - a Kernel invariant is violated;
 - application concerns must be embedded in the Kernel;
 - independent replication produces a contradictory result.
