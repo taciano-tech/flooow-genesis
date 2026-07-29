@@ -2,126 +2,289 @@
 
 **Status:** Planned
 
----
-
-# Objective
-
-Validate whether the current Flooow Genesis Computational Kernel is sufficient to model a real organizational process without introducing new Kernel primitives.
+**Protocol Version:** 1.0
 
 ---
 
-# Motivation
+## 1. Objective
 
-The Kernel must evolve only when experimental evidence demonstrates that the existing primitives are insufficient.
-
-This experiment establishes the first evidence-driven validation process of the Kernel.
+Validate whether the current Flooow Genesis Computational Kernel is sufficient to model a real organizational process without introducing additional Kernel primitives.
 
 ---
 
-# Hypothesis
+## 2. Motivation
 
-The current Kernel Ontology is sufficient to represent a real organizational workflow without requiring additional universal primitives.
+The Kernel must evolve only when experimental evidence demonstrates that its existing primitives are insufficient.
 
----
-
-# Research Questions
-
-1. Can a real organizational process be represented exclusively with the existing Kernel concepts?
-
-2. Does the reasoning process remain deterministic?
-
-3. Are the current primitives expressive enough?
-
-4. Is any new primitive objectively required?
+This experiment establishes the first evidence-driven validation cycle of the Flooow Genesis Kernel.
 
 ---
 
-# Experimental Design
+## 3. Research Question
 
-The experiment will implement a minimal Vertical Slice representing a real organizational operation.
+Can the current Kernel Ontology represent a real organizational workflow while preserving determinism, traceability, explainability, and consistent state transitions?
 
-The implementation must exercise:
+---
+
+## 4. Hypothesis
+
+The current Kernel primitives are sufficient to represent a real organizational workflow without requiring additional universal primitives.
+
+---
+
+## 5. Null Hypothesis
+
+The current Kernel primitives are not sufficient to represent a real organizational workflow without requiring additional universal primitives.
+
+---
+
+## 6. Experimental Scope
+
+The experiment will implement the smallest executable vertical slice capable of representing a real organizational operation.
+
+The vertical slice must remain outside the Kernel and use only the existing Kernel abstractions.
+
+The experiment will not attempt to validate:
+
+- production scalability;
+- distributed execution;
+- persistence technology;
+- user-interface design;
+- marketplace-specific business completeness.
+
+---
+
+## 7. Candidate Vertical Slice
+
+The candidate vertical slice is Marketplace Operations.
+
+Marketplace Operations was selected because it provides a realistic organizational workflow while remaining external to the Kernel.
+
+The application is an experimental instrument, not a source of Kernel concepts.
+
+---
+
+## 8. Kernel Concepts Under Validation
+
+The experiment must exercise the Kernel concepts currently identified as necessary for the workflow:
 
 - Entity
 - Event
 - State
 - Process
 
-without introducing additional Kernel abstractions.
+No additional primitive may be introduced during the experiment without first recording evidence of insufficiency.
 
 ---
 
-# Expected Evidence
+## 9. Independent Variables
 
-The experiment should demonstrate:
+The independent variables are:
+
+- workflow scenario;
+- sequence of accepted events;
+- initial entity state;
+- process execution path;
+- valid and invalid transition attempts.
+
+---
+
+## 10. Dependent Variables
+
+The dependent variables are:
+
+- resulting entity state;
+- generated events;
+- process outcome;
+- execution trace;
+- invariant validation result;
+- determinism of repeated executions.
+
+---
+
+## 11. Controlled Variables
+
+The following conditions must remain constant:
+
+- Kernel version;
+- application version;
+- workflow definition;
+- initial state;
+- event sequence;
+- execution environment;
+- test dataset.
+
+---
+
+## 12. Experimental Design
+
+The experiment shall:
+
+1. define one minimal organizational workflow;
+2. represent its actors and objects as entities;
+3. express relevant occurrences as events;
+4. model valid state transitions;
+5. execute the workflow through a process;
+6. reject invalid transitions;
+7. record the complete execution trace;
+8. repeat the same execution using the same inputs;
+9. compare all resulting states, events, and decisions.
+
+The application must not contain alternative abstractions that duplicate Kernel responsibilities.
+
+---
+
+## 13. Expected Evidence
+
+The experiment should produce evidence of:
 
 - deterministic execution;
 - complete traceability;
-- explainable reasoning;
-- consistent state transitions.
+- explainable decisions;
+- consistent state transitions;
+- invariant enforcement;
+- reproducible outcomes;
+- clear separation between Kernel and application concerns.
 
 ---
 
-# Success Criteria
+## 14. Evidence Collection
 
-The experiment succeeds if:
+Evidence shall include:
 
-- no additional Kernel primitive is required;
+- executable automated tests;
+- input fixtures;
+- expected outputs;
+- resulting state snapshots;
+- emitted event records;
+- execution traces;
+- invariant violation records;
+- build and test results.
+
+Every evidence item must be associated with the experiment version and the source commit.
+
+---
+
+## 15. Success Criteria
+
+The experiment succeeds when all of the following conditions are satisfied:
+
 - the workflow is completely represented;
-- reasoning remains deterministic;
-- no architectural contradiction is identified.
+- no additional Kernel primitive is required;
+- valid transitions produce the expected states;
+- invalid transitions are rejected;
+- identical inputs produce identical outputs;
+- the complete execution is traceable;
+- decisions can be explained from recorded evidence;
+- Kernel invariants remain valid;
+- another engineer can reproduce the result.
 
 ---
 
-# Failure Criteria
+## 16. Failure Criteria
 
-The experiment fails if:
+The experiment fails when any of the following conditions occurs:
 
 - an essential concept cannot be represented;
-- deterministic reasoning breaks;
-- Kernel invariants are violated;
-- a genuinely universal concept emerges.
+- identical inputs produce different outputs;
+- the execution cannot be completely traced;
+- a state transition cannot be explained;
+- a Kernel invariant is violated;
+- application concerns must be embedded in the Kernel;
+- independent replication produces a contradictory result.
 
-Failure is considered scientific evidence.
-
----
-
-# Candidate Vertical Slice
-
-Marketplace Operations
-
-The Marketplace application is intentionally selected because it represents a realistic organizational workflow while remaining external to the Kernel.
+Failure is valid scientific evidence and must not be hidden or reclassified as success.
 
 ---
 
-# Kernel Concepts Under Validation
+## 17. Threats to Validity
 
-- Entity
-- Event
-- State
-- Process
+Potential threats include:
+
+- selecting a workflow too simple to expose Kernel limitations;
+- encoding domain behavior directly into test fixtures;
+- confusing application concepts with universal concepts;
+- changing multiple variables during the same execution;
+- interpreting test success as proof of universality;
+- promoting abstractions before independent replication;
+- allowing implementation details to influence the ontology.
+
+Each identified threat must be recorded during execution.
 
 ---
 
-# Risks
+## 18. Replication Procedure
 
-- Hidden domain concepts being promoted into the Kernel.
-- Confusing application concerns with universal concepts.
-- Premature architectural generalization.
+An independent engineer must be able to reproduce the experiment by:
+
+1. checking out the recorded source commit;
+2. using the documented JVM and Gradle versions;
+3. executing the documented build command;
+4. running the experiment test suite;
+5. using the committed input fixtures;
+6. comparing generated evidence with the expected evidence;
+7. recording any divergence.
+
+Replication is successful only when the observed results match the documented results.
 
 ---
 
-# Decision Matrix
+## 19. Decision Matrix
 
 | Observation | Decision |
-|------------|----------|
-| Kernel is sufficient | Preserve Kernel |
-| Missing universal concept | Open RFC |
-| Architectural contradiction | Review Ontology |
-| Domain-specific limitation | Solve in the application |
+|---|---|
+| Kernel is sufficient and evidence is reproducible | Preserve the Kernel |
+| A missing universal concept is supported by evidence | Open an RFC |
+| An architectural contradiction is identified | Review the Kernel Ontology |
+| The limitation is domain-specific | Resolve it in the application |
+| Evidence is incomplete or replication fails | Continue investigation |
 
 ---
 
-# Final Result
+## 20. Architectural Constraints
+
+During the experiment:
+
+- no domain-specific primitive may enter the Kernel;
+- no Kernel change may be made solely to simplify the application;
+- no architectural conclusion may be based only on opinion;
+- no failed result may be removed from the evidence record;
+- no Kernel evolution may occur without a separate accepted decision.
+
+---
+
+## 21. Execution Record
+
+To be completed when the experiment begins.
+
+- **Source commit:** Pending
+- **Execution date:** Pending
+- **Executor:** Pending
+- **Environment:** Pending
+- **Build result:** Pending
+- **Test result:** Pending
+- **Evidence location:** Pending
+
+---
+
+## 22. Replication Record
+
+To be completed after independent replication.
+
+- **Replication commit:** Pending
+- **Replication date:** Pending
+- **Replicator:** Pending
+- **Result:** Pending
+- **Observed divergences:** Pending
+
+---
+
+## 23. Final Result
 
 Pending experimental execution.
+
+---
+
+## 24. Architectural Decision
+
+Pending evidence collection and independent replication.
