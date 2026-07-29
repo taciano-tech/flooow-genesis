@@ -2,7 +2,7 @@
 
 ## The Ontology of the Flooow Computational Kernel
 
-**Version:** 0.1  
+**Version:** 0.1
 **Status:** Draft
 
 ---

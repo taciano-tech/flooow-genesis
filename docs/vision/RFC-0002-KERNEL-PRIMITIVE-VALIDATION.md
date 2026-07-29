@@ -2,7 +2,7 @@
 
 ## Kernel Primitive Validation
 
-**Version:** 0.1  
+**Version:** 0.1
 **Status:** Draft
 
 ---
