@@ -1,6 +1,6 @@
 # EXP-0001 — Execution Plan
 
-**Status:** In Progress
+**Status:** Completed
 
 **Experiment:** EXP-0001 — Kernel Validation
 
@@ -55,49 +55,49 @@ Create the empty experimental application module.
 
 Acceptance criteria: included in `settings.gradle.kts`, recognized by Gradle, compiles successfully, repository build succeeds, and no Kernel source file changes.
 
-**Status:** Pending
+**Status:** Completed
 
 ### E-0002 — Establish Kernel Dependency
 
 Validate that the experimental module can consume `:platform:foundation:kernel` through public APIs only.
 
-**Status:** Pending
+**Status:** Completed
 
 ### E-0003 — Create Observation
 
 Record a marketplace order observation using `Observation`, `Identifier`, and `Timestamp`.
 
-**Status:** Pending
+**Status:** Completed
 
 ### E-0004 — Derive Evidence
 
 Create `Evidence` referencing the observation with explicit `Confidence` and `Timestamp`.
 
-**Status:** Pending
+**Status:** Completed
 
 ### E-0005 — Define Hypothesis
 
 Create the hypothesis: `The marketplace order can be approved.`
 
-**Status:** Pending
+**Status:** Completed
 
 ### E-0006 — Execute Deterministic Reasoning
 
 Evaluate the hypothesis through `ReasoningModule.deterministic()` using an `EvaluationRequest` and obtain an `EvaluationResult`.
 
-**Status:** Pending
+**Status:** Completed
 
 ### E-0007 — Validate Judgment
 
 Validate that the returned `Judgment` references the hypothesis, preserves evaluated evidence, and follows the deterministic reasoning policy.
 
-**Status:** Pending
+**Status:** Completed
 
 ### E-0008 — Produce Decision
 
 Create the decision: `Approve the marketplace order.` The trace must connect decision, judgment, hypothesis, evidence, and observation.
 
-**Status:** Pending
+**Status:** Completed
 
 ### E-0009 — Validate Determinism and Traceability
 
@@ -115,7 +115,7 @@ Observation
 → Decision
 ```
 
-**Status:** Pending
+**Status:** Completed
 
 ---
 
@@ -133,32 +133,50 @@ PR-0026 will not introduce persistence, databases, HTTP APIs, user interfaces, m
 
 ## 7. Completion Checklist
 
-- [ ] E-0001 — Bootstrap Experimental Module
-- [ ] E-0002 — Establish Kernel Dependency
-- [ ] E-0003 — Create Observation
-- [ ] E-0004 — Derive Evidence
-- [ ] E-0005 — Define Hypothesis
-- [ ] E-0006 — Execute Deterministic Reasoning
-- [ ] E-0007 — Validate Judgment
-- [ ] E-0008 — Produce Decision
-- [ ] E-0009 — Validate Determinism and Traceability
+- [x] E-0001 — Bootstrap Experimental Module
+- [x] E-0002 — Establish Kernel Dependency
+- [x] E-0003 — Create Observation
+- [x] E-0004 — Derive Evidence
+- [x] E-0005 — Define Hypothesis
+- [x] E-0006 — Execute Deterministic Reasoning
+- [x] E-0007 — Validate Judgment
+- [x] E-0008 — Produce Decision
+- [x] E-0009 — Validate Determinism and Traceability
 
 ---
 
 ## 8. Execution Record
 
-- **Starting commit:** Pending
-- **Final source commit:** Pending
-- **Executor:** Pending
-- **Execution date:** Pending
-- **JVM version:** Pending
-- **Gradle version:** Pending
-- **Build result:** Pending
-- **Test result:** Pending
-- **Evidence location:** Pending
+- **Starting commit:** `82f7488`
+- **Final source commit:** `90a0617`
+- **Executor:** Taciano Steiner
+- **Execution date:** 2026-07-30
+- **JVM version:** Microsoft OpenJDK 25.0.2+10-LTS
+- **Gradle version:** 9.4.0
+- **Build result:** Successful (`./gradlew build`)
+- **Test result:** Successful
+- **Evidence location:** `applications/experiments/marketplace`
 
 ---
 
 ## 9. Final Result
 
-Pending completion of E-0001 through E-0009.
+The experiment was successfully completed.
+
+The complete deterministic reasoning pipeline was executed exclusively through the public Kernel API:
+
+```text
+Observation
+→ Evidence
+→ Hypothesis
+→ EvaluationRequest
+→ Judgment
+→ EvaluationResult
+→ Decision
+```
+
+All acceptance criteria were satisfied.
+
+No Kernel source files were modified.
+
+The experimental module remains external to the Kernel and demonstrates deterministic and traceable reasoning behavior.
