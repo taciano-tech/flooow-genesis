@@ -6,39 +6,54 @@ import kotlin.test.assertEquals
 class MarketplaceExperimentDeterminismTest {
 
     @Test
-    fun `marketplace reasoning is deterministic`() {
+    fun `evaluation remains deterministic`() {
 
-        val firstEvaluation =
-            MarketplaceExperiment.orderApprovalEvaluation
-
-        val secondEvaluation =
+        val evaluation =
             MarketplaceExperiment.orderApprovalEvaluation
 
         assertEquals(
-            firstEvaluation,
-            secondEvaluation
+            MarketplaceExperiment.orderApprovalHypothesis.id,
+            evaluation.judgment.hypothesisId
         )
 
-        val firstDecision =
-            MarketplaceExperiment.orderApprovalDecision
-
-        val secondDecision =
-            MarketplaceExperiment.orderApprovalDecision
-
         assertEquals(
-            firstDecision,
-            secondDecision
+            MarketplaceExperiment.orderApprovalEvaluation,
+            evaluation
         )
     }
 
     @Test
-    fun `decision trace remains coherent`() {
+    fun `evidence references observation`() {
+
+        val observation =
+            MarketplaceExperiment.orderCreatedObservation
+
+        val evidence =
+            MarketplaceExperiment.orderCreatedEvidence
+
+        assertEquals(
+            setOf(observation.id),
+            evidence.observationIds
+        )
+    }
+
+    @Test
+    fun `decision references evaluated evidence`() {
 
         val decision =
             MarketplaceExperiment.orderApprovalDecision
 
         val evidence =
             MarketplaceExperiment.orderCreatedEvidence
+
+        assertEquals(
+            setOf(evidence.id),
+            decision.evidenceIds
+        )
+    }
+
+    @Test
+    fun `judgment references hypothesis`() {
 
         val hypothesis =
             MarketplaceExperiment.orderApprovalHypothesis
@@ -47,13 +62,75 @@ class MarketplaceExperimentDeterminismTest {
             MarketplaceExperiment.orderApprovalEvaluation.judgment
 
         assertEquals(
-            setOf(evidence.id),
-            decision.evidenceIds
+            hypothesis.id,
+            judgment.hypothesisId
+        )
+    }
+
+    @Test
+    fun `decision context preserves evaluation`() {
+
+        val context =
+            MarketplaceExperiment.orderApprovalDecisionContext
+
+        val evaluation =
+            MarketplaceExperiment.orderApprovalEvaluation
+
+        assertEquals(
+            evaluation.judgment,
+            context.judgment
+        )
+
+        assertEquals(
+            evaluation.evaluatedEvidence,
+            context.evidenceSet
+        )
+    }
+
+    @Test
+    fun `complete reasoning pipeline remains coherent`() {
+
+        val observation =
+            MarketplaceExperiment.orderCreatedObservation
+
+        val evidence =
+            MarketplaceExperiment.orderCreatedEvidence
+
+        val hypothesis =
+            MarketplaceExperiment.orderApprovalHypothesis
+
+        val evaluation =
+            MarketplaceExperiment.orderApprovalEvaluation
+
+        val context =
+            MarketplaceExperiment.orderApprovalDecisionContext
+
+        val decision =
+            MarketplaceExperiment.orderApprovalDecision
+
+        assertEquals(
+            setOf(observation.id),
+            evidence.observationIds
         )
 
         assertEquals(
             hypothesis.id,
-            judgment.hypothesisId
+            evaluation.judgment.hypothesisId
+        )
+
+        assertEquals(
+            evaluation.judgment,
+            context.judgment
+        )
+
+        assertEquals(
+            evaluation.evaluatedEvidence,
+            context.evidenceSet
+        )
+
+        assertEquals(
+            setOf(evidence.id),
+            decision.evidenceIds
         )
     }
 }
