@@ -3,8 +3,10 @@ package io.flooow.experiments.marketplace
 import io.flooow.kernel.language.Confidence
 import io.flooow.kernel.language.Identifier
 import io.flooow.kernel.language.Timestamp
+import io.flooow.kernel.model.Decision
 import io.flooow.kernel.model.Evidence
 import io.flooow.kernel.model.Observation
+import io.flooow.kernel.reasoning.DecisionContext
 import io.flooow.kernel.reasoning.EvaluationRequest
 import io.flooow.kernel.reasoning.EvaluationResult
 import io.flooow.kernel.reasoning.EvidenceSet
@@ -63,5 +65,24 @@ object MarketplaceExperiment {
                         evidences = setOf(orderCreatedEvidence)
                     )
             )
+        )
+
+    val orderApprovalDecisionContext: DecisionContext =
+        DecisionContext(
+            hypothesis = orderApprovalHypothesis,
+            evidenceSet = orderApprovalEvaluation.evaluatedEvidence,
+            judgment = orderApprovalEvaluation.judgment
+        )
+
+    val orderApprovalDecision: Decision =
+        Decision(
+            id = Identifier("decision-marketplace-order-approval"),
+            statement = "Approve the marketplace order.",
+            evidenceIds =
+                orderApprovalDecisionContext
+                    .evidenceSet
+                    .evidences
+                    .mapTo(mutableSetOf()) { evidence -> evidence.id },
+            decidedAt = Timestamp.parse("2026-07-29T18:00:04Z")
         )
 }
