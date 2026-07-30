@@ -4,4 +4,6 @@ plugins {
 
 dependencies {
     implementation(project(":platform:foundation:kernel"))
+
+    testImplementation(kotlin("test"))
 }
