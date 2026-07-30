@@ -5,7 +5,15 @@ import io.flooow.kernel.language.Identifier
 import io.flooow.kernel.language.Timestamp
 import io.flooow.kernel.model.Evidence
 import io.flooow.kernel.model.Observation
+import io.flooow.kernel.reasoning.EvaluationRequest
+import io.flooow.kernel.reasoning.EvaluationResult
+import io.flooow.kernel.reasoning.EvidenceSet
 import io.flooow.kernel.reasoning.Hypothesis
+import io.flooow.kernel.reasoning.ReasoningConfiguration
+import io.flooow.kernel.reasoning.ReasoningModule
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 
 object MarketplaceExperiment {
 
@@ -30,5 +38,30 @@ object MarketplaceExperiment {
             statement = "The marketplace order can be approved.",
             confidence = Confidence.CERTAIN,
             createdAt = Timestamp.parse("2026-07-29T18:00:02Z")
+        )
+
+    private val reasoningClock: Clock =
+        Clock.fixed(
+            Instant.parse("2026-07-29T18:00:03Z"),
+            ZoneOffset.UTC
+        )
+
+    private val reasoningEngine =
+        ReasoningModule.deterministic(
+            configuration =
+                ReasoningConfiguration(
+                    clock = reasoningClock
+                )
+        )
+
+    val orderApprovalEvaluation: EvaluationResult =
+        reasoningEngine.evaluate(
+            EvaluationRequest(
+                hypothesis = orderApprovalHypothesis,
+                evidenceSet =
+                    EvidenceSet(
+                        evidences = setOf(orderCreatedEvidence)
+                    )
+            )
         )
 }
