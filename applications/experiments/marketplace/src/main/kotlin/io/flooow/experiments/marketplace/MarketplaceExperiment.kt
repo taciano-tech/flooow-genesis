@@ -5,6 +5,7 @@ import io.flooow.kernel.language.Identifier
 import io.flooow.kernel.language.Timestamp
 import io.flooow.kernel.model.Evidence
 import io.flooow.kernel.model.Observation
+import io.flooow.kernel.reasoning.Hypothesis
 
 object MarketplaceExperiment {
 
@@ -21,5 +22,13 @@ object MarketplaceExperiment {
             observationIds = setOf(orderCreatedObservation.id),
             confidence = Confidence.CERTAIN,
             recordedAt = Timestamp.parse("2026-07-29T18:00:01Z")
+        )
+
+    val orderApprovalHypothesis: Hypothesis =
+        Hypothesis(
+            id = Identifier("hypothesis-marketplace-order-approval"),
+            statement = "The marketplace order can be approved.",
+            confidence = Confidence.CERTAIN,
+            createdAt = Timestamp.parse("2026-07-29T18:00:02Z")
         )
 }
