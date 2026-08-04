@@ -297,6 +297,14 @@ The controlled replication package and independent procedure are documented in
 `research/experiments/EXP-0001-REPLICATION.md`. Their preparation does not fill
 or satisfy the independent replication record below.
 
+### Interim Evaluation
+
+The collected evidence is assessed against every success criterion in
+`research/experiments/EXP-0001-INTERIM-EVALUATION.md`. The assessment supports
+determinism, traceability, and explainability for the current reasoning slice,
+but identifies incomplete workflow and transition coverage. Its interim
+disposition is **Continue Investigation**.
+
 ---
 
 ## 22. Replication Record
@@ -313,10 +321,15 @@ To be completed after independent replication.
 
 ## 23. Final Result
 
-Pending experimental execution.
+No final result has been reached. Initial execution produced relevant evidence,
+but the complete workflow criteria and independent replication remain pending.
+The interim disposition is **Continue Investigation**.
 
 ---
 
 ## 24. Architectural Decision
 
-Pending evidence collection and independent replication.
+No architectural decision has been made. The current slice did not require a
+Kernel change, but that result is not evidence of universal sufficiency. No
+Kernel evolution is authorized while evidence collection and independent
+replication remain incomplete.
