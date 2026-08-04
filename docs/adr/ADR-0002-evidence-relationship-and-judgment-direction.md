@@ -1,8 +1,10 @@
 # ADR-0002: Contextual Evidence Relationship and Structured Judgment Direction
 
-Status: Proposed
+Status: Accepted
 
 Date: 2026-08-04
+
+Accepted: 2026-08-04 through PR #42
 
 ## Context
 
