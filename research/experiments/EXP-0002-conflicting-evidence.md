@@ -1,6 +1,6 @@
 # EXP-0002 — Conflicting Evidence Evaluation
 
-**Status:** In Progress — Baseline Characterized
+**Status:** Completed — Null Hypothesis Supported
 
 **Protocol Version:** 1.0
 
@@ -247,3 +247,41 @@ The characterization observed deterministic output but semantic divergence for
 contradicting and unresolved evidence. The experiment hypothesis was not
 supported, and the null hypothesis gained baseline support. Independent fresh
 replication is required before a final decision or RFC.
+
+## 22. Independent Replication Record
+
+Independent replication was completed on 2026-08-04 from frozen commit
+`7f159edf588f664ea061adc7b28b525238c66f6c`. The replicator forced fresh task
+execution for the isolated characterization test and the complete build.
+
+- isolated characterization: 1 test passed;
+- complete clean build: 72 tests passed;
+- committed snapshot: reproduced completely;
+- five controlled scenarios: reproduced without semantic divergence from the
+  baseline record;
+- Kernel or production changes: none.
+
+The complete provenance and environmental notes are recorded in
+`EXP-0002-INDEPENDENT-REPLICATION-001.md`.
+
+## 23. Final Assessment
+
+The experiment hypothesis is **not supported**. The current executable Kernel
+cannot faithfully distinguish supporting, contradicting, and unresolved
+evidence using its existing contracts.
+
+The null hypothesis is **supported** by reproduced evidence. Determinism and
+permutation stability are present, but they do not compensate for the missing
+semantic relationship: opposite and conflicting evidence produce the same
+supportive conclusion, and confidence magnitude cannot encode direction.
+
+## 24. Final Decision
+
+Per the decision matrix, a universal reasoning relationship is demonstrably
+missing. The authorized next step is to **open a separate RFC** that evaluates
+how evidence relates to a hypothesis and how judgments express supported,
+contradicted, or unresolved direction.
+
+This experiment does not authorize a Kernel implementation. Any proposed
+concept must satisfy the RFC process and the Kernel promotion rules before code
+is changed.

@@ -4,7 +4,7 @@
 
 **Kernel change:** None
 
-**Disposition:** Continue Investigation
+**Disposition:** Open a Separate RFC
 
 ## Frozen Baseline
 
@@ -61,9 +61,10 @@ The null hypothesis is **supported by the baseline evidence**: an additional
 relationship, interpretation, or evaluation mechanism is required to
 distinguish supporting, contradicting, and unresolved evidence.
 
-This assessment is not yet a final architectural decision. Independent fresh
-replication is required before the decision matrix can authorize a separate
-RFC or preserve the current Kernel.
+Independent fresh replication reproduced this assessment completely. The
+decision matrix therefore authorizes a separate RFC to evaluate the missing
+universal reasoning relationship. This result does not authorize a Kernel
+implementation.
 
 ## Integrity Notes
 
@@ -75,9 +76,20 @@ RFC or preserve the current Kernel.
 - The observed floating-point result `0.6499999999999999` is preserved exactly
   in the snapshot rather than normalized after execution.
 
+## Independent Replication
+
+Independent replication from frozen commit
+`7f159edf588f664ea061adc7b28b525238c66f6c` passed the isolated
+characterization test (1 test) and a fresh clean full build (72 tests). All five
+scenario results and the complete committed snapshot reproduced without a
+semantic or test-count divergence.
+
+The replication provenance is recorded in
+`EXP-0002-INDEPENDENT-REPLICATION-001.md`.
+
 ## Required Next Step
 
-An independent engineer must execute the characterization test and full build
-with fresh task outputs, compare the committed snapshot, and record every
-semantic or environmental divergence. Until then, the disposition remains
-**Continue Investigation**.
+Open a separate RFC for the missing relationship between evidence and a
+hypothesis and for explicit judgment direction. Preserve this frozen baseline
+as the evidence for the proposal. Do not change the Kernel until the RFC is
+evaluated and the Kernel promotion rules are satisfied.
