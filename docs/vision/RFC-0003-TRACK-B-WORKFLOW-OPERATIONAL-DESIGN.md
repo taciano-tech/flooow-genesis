@@ -2,7 +2,9 @@
 
 **Version:** 0.1
 
-**Status:** Draft
+**Status:** Accepted Experimental Baseline
+
+**Accepted:** 2026-08-04 through PR #28
 
 ## Objective
 
@@ -186,9 +188,9 @@ Rejected because absence is a useful experimental condition: composition with
 existing contracts can test whether additional universal abstractions are
 actually necessary.
 
-## Decision Requested
+## Decision
 
-Reviewers are asked to accept or reject this operational design as the baseline
-for a later implementation task. Acceptance authorizes only that subsequent
-application experiment. It does not authorize a Kernel change, accept the
-EXP-0001 hypothesis, or complete Track B.
+This operational design is accepted as the baseline for the Track B application
+experiment. Acceptance authorizes only that application experiment. It does
+not authorize a Kernel change, accept the EXP-0001 hypothesis, or complete
+Track B.

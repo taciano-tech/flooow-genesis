@@ -314,6 +314,24 @@ The controlled replication package and independent procedure are documented in
 `research/experiments/EXP-0001-REPLICATION.md`. Their preparation does not fill
 or satisfy the independent replication record below.
 
+### Track B Initial Execution
+
+The RFC-0003 operational design was exercised with application-owned SKU
+identity, immutable inventory snapshots, inventory commands, accepted
+occurrences, and typed rejected transitions. The implementation consumed
+existing Kernel `Identifier`, `Timestamp`, `Action`, and `Outcome` contracts and
+did not modify the Kernel or introduce universal `Entity`, `State`, `Event`, or
+`Process` types.
+
+The initial scenarios demonstrate deterministic receipt and consumption,
+identity preservation, forward-only temporal transitions, rejection of
+over-consumption, unchanged input snapshots after rejection, complete
+transition traces, and separation of intervention, expected impact, and
+observed outcome. The complete repository build passed with 70 tests and no
+failures, errors, or skipped tests. This is Track B evidence for the Marketplace
+Operations workflow only; it does not promote an ontology candidate or complete
+EXP-0001.
+
 ### Interim Evaluation
 
 The collected evidence is assessed against every success criterion in
