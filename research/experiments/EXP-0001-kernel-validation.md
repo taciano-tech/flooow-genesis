@@ -342,9 +342,10 @@ repository build passed with 71 tests and no failures, errors, or skipped tests.
 
 The collected evidence is assessed against every success criterion in
 `research/experiments/EXP-0001-INTERIM-EVALUATION.md`. The assessment supports
-determinism, traceability, and explainability for the current reasoning slice,
-but identifies incomplete workflow and transition coverage. Its interim
-disposition is **Continue Investigation**.
+eight of nine criteria within the accepted experimental scope after combining
+Track A reasoning and Track B workflow evidence. Independent replication is the
+remaining pending criterion, so the interim disposition remains **Continue
+Investigation**.
 
 ---
 
@@ -362,9 +363,9 @@ To be completed after independent replication.
 
 ## 23. Final Result
 
-No final result has been reached. Initial execution produced relevant evidence,
-but the complete workflow criteria and independent replication remain pending.
-The interim disposition is **Continue Investigation**.
+No final result has been reached. The accepted workflow baseline is implemented
+and controlled reproduction succeeds, but independent replication remains
+pending. The interim disposition is **Continue Investigation**.
 
 ---
 
