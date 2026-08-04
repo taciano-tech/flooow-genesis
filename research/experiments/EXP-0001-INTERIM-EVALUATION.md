@@ -91,7 +91,8 @@ is **Continue Investigation**.
    result or divergence.
 2. A separately reviewed design resolves the executable status and operational
    meaning of identity, temporal state, occurrence, and workflow execution as
-   required by `EXP-0001-PROTOCOL-AMENDMENT-001.md`.
+   required by `EXP-0001-PROTOCOL-AMENDMENT-001.md`. The current proposal is
+   `docs/vision/RFC-0003-TRACK-B-WORKFLOW-OPERATIONAL-DESIGN.md`.
 3. Only after that design is accepted, a versioned workflow experiment captures
    valid and invalid transitions, resulting states, occurrences, the workflow
    outcome, and the complete trace.
