@@ -102,4 +102,4 @@ The Kernel contains only experimentally validated concepts.
 | ID | Title | Status |
 |----|-------|--------|
 | EXP-0001 | Kernel Validation | Completed |
-| EXP-0002 | Conflicting Evidence Evaluation | Planned |
+| EXP-0002 | Conflicting Evidence Evaluation | In Progress |
