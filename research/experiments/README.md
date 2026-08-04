@@ -101,4 +101,4 @@ The Kernel contains only experimentally validated concepts.
 
 | ID | Title | Status |
 |----|-------|--------|
-| EXP-0001 | Kernel Validation | In Progress |
+| EXP-0001 | Kernel Validation | Completed |
