@@ -75,6 +75,18 @@ The experiment must exercise the Kernel concepts currently identified as necessa
 
 No additional primitive may be introduced during the experiment without first recording evidence of insufficiency.
 
+### Protocol Amendment
+
+Repository inspection established that `Entity`, `Event`, `State`, and
+`Process` are not present in the executable Kernel baseline. Their documentary
+statuses also differ: `Entity` and `State` are draft candidates, `Event` is an
+open question, and `Process` is not listed as a candidate in the draft
+ontology.
+
+`EXP-0001-PROTOCOL-AMENDMENT-001.md` separates the executable reasoning slice
+from workflow ontology validation. Future evidence must follow that amendment
+and must not treat application-defined substitutes as Kernel primitives.
+
 ---
 
 ## 9. Independent Variables
@@ -131,6 +143,11 @@ The experiment shall:
 9. compare all resulting states, events, and decisions.
 
 The application must not contain alternative abstractions that duplicate Kernel responsibilities.
+
+The workflow-specific steps above remain design targets rather than completed
+executable measures. Their implementation is governed by
+`EXP-0001-PROTOCOL-AMENDMENT-001.md` because the referenced workflow concepts
+are absent from the current Kernel API.
 
 ---
 
