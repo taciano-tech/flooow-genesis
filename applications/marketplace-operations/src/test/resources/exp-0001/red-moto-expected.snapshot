@@ -1,0 +1,13 @@
+sku=RED-MOTO-KIT-001
+coverage.days=3
+stockout.projectedOn=2026-08-04
+stockout.durationDays=4
+shortage.unitsUnavailable=40
+goal.unitsRemaining=180
+goal.unitsAtRisk=40
+hypothesis.id=hypothesis-red-moto-kit-001-inventory-gap
+judgment.id=judgment-hypothesis-red-moto-kit-001-inventory-gap
+judgment.confidence=1.0
+decision.id=decision-red-moto-kit-001-inventory-risk
+decision.statement=Expedite replenishment to arrive no later than 2026-08-04.
+reasoning.stages=OBSERVATION,OBSERVATION,OBSERVATION,OBSERVATION,EVIDENCE,EVIDENCE,EVIDENCE,EVIDENCE,HYPOTHESIS,JUDGMENT,DECISION
