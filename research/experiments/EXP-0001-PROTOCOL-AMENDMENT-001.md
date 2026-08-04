@@ -83,10 +83,10 @@ defines:
 5. a versioned experiment baseline after any separately accepted architectural
    change.
 
-The proposed operational design is documented in
-`docs/vision/RFC-0003-TRACK-B-WORKFLOW-OPERATIONAL-DESIGN.md`. While that RFC
-remains Draft, it is evidence under review rather than an accepted Track B
-implementation baseline.
+The accepted experimental baseline is documented in
+`docs/vision/RFC-0003-TRACK-B-WORKFLOW-OPERATIONAL-DESIGN.md`. Its acceptance
+authorizes the Track B application experiment only and does not authorize a
+Kernel change.
 
 An RFC or ADR produced for Track B is evidence collection, not automatic
 authorization to change the Kernel. Any Kernel change requires its own accepted
