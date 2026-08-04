@@ -262,8 +262,9 @@ To be completed when the experiment begins.
 - **Executor:** Codex, supervised by the repository owner
 - **Environment:** Windows, JVM toolchain 21, Gradle 9.4.0
 - **Build result:** Success (`gradlew.bat build --no-daemon`)
-- **Test result:** 57 tests passed; 0 failed; 0 skipped
-- **Evidence location:** `applications/marketplace-operations/src/test`
+- **Test result:** 58 tests passed; 0 failed; 0 skipped
+- **Evidence location:** `applications/marketplace-operations/src/test` and
+  `applications/marketplace-operations/src/test/resources/exp-0001`
 
 ### Initial Vertical Slice Observation
 
@@ -285,6 +286,10 @@ Six application tests demonstrated:
 
 This is initial evidence only. Independent replication and the remaining
 experiment evaluation are required before an architectural conclusion.
+
+The controlled replication package and independent procedure are documented in
+`research/experiments/EXP-0001-REPLICATION.md`. Their preparation does not fill
+or satisfy the independent replication record below.
 
 ---
 
