@@ -262,7 +262,7 @@ To be completed when the experiment begins.
 - **Executor:** Codex, supervised by the repository owner
 - **Environment:** Windows, JVM toolchain 21, Gradle 9.4.0
 - **Build result:** Success (`gradlew.bat build --no-daemon`)
-- **Test result:** 58 tests passed; 0 failed; 0 skipped
+- **Test result:** 63 tests passed; 0 failed; 0 skipped
 - **Evidence location:** `applications/marketplace-operations/src/test` and
   `applications/marketplace-operations/src/test/resources/exp-0001`
 
@@ -274,7 +274,7 @@ observations, evidence, a deterministic judgment, calculated inventory
 projections, intervention alternatives, a recommendation, expected impact, and
 a calculation trace.
 
-Six application tests demonstrated:
+Twelve application tests demonstrated:
 
 - explicit stock coverage, stockout date, shortage duration, and goal exposure;
 - traceability from observations and evidence to the recommendation;
@@ -283,6 +283,12 @@ Six application tests demonstrated:
 - identical results for identical inputs;
 - no intervention when replenishment precedes the projected stockout;
 - rejection of invalid operational inputs.
+- explicit behavior for zero inventory and partial-day coverage;
+- absence of a gap when replenishment coincides with stockout;
+- shortage exposure capped at the commercial period boundary;
+- separation between physical stockout and risk to an already achieved goal;
+- reproduction of the canonical fixture against committed semantic evidence.
+- cross-platform snapshot comparison independent of operating-system line endings.
 
 This is initial evidence only. Independent replication and the remaining
 experiment evaluation are required before an architectural conclusion.
