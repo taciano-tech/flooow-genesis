@@ -1,6 +1,6 @@
 # EXP-0002 — Conflicting Evidence Evaluation
 
-**Status:** Planned
+**Status:** In Progress — Baseline Characterized
 
 **Protocol Version:** 1.0
 
@@ -236,3 +236,14 @@ scenarios separately and record every divergence.
 
 No conclusion has been reached. The current implementation suggests a testable
 representation risk, not a predetermined experiment result.
+
+## 21. Baseline Execution Record
+
+The frozen baseline was executed on 2026-08-04 without a Kernel change. The
+controlled scenarios, observed snapshot, and assessment are documented in
+`EXP-0002-BASELINE-RESULT.md`.
+
+The characterization observed deterministic output but semantic divergence for
+contradicting and unresolved evidence. The experiment hypothesis was not
+supported, and the null hypothesis gained baseline support. Independent fresh
+replication is required before a final decision or RFC.
