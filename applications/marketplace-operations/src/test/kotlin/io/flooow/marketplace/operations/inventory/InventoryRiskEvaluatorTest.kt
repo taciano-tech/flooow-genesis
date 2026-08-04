@@ -67,6 +67,46 @@ class InventoryRiskEvaluatorTest {
     }
 
     @Test
+    fun `preserves the complete reasoning chain from observations to decision`() {
+        val assessment = evaluator.evaluate(redMotoScenario)
+
+        assertEquals(
+            assessment.hypothesis.id,
+            assessment.evaluation.judgment.hypothesisId
+        )
+        assertEquals(
+            assessment.evaluation.judgment,
+            assessment.decisionContext.judgment
+        )
+        assertEquals(
+            assessment.evaluation.evaluatedEvidence,
+            assessment.decisionContext.evidenceSet
+        )
+        assertEquals(
+            assessment.decisionContext.evidenceSet.evidences.map { it.id }.toSet(),
+            assessment.recommendation.evidenceIds
+        )
+
+        val stages = assessment.reasoningTrace.map { it.stage }.toSet()
+        assertEquals(ReasoningStage.entries.toSet(), stages)
+
+        val judgmentStep = assessment.reasoningTrace.single {
+            it.stage == ReasoningStage.JUDGMENT
+        }
+        assertEquals(setOf(assessment.hypothesis.id), judgmentStep.references)
+
+        val decisionStep = assessment.reasoningTrace.single {
+            it.stage == ReasoningStage.DECISION
+        }
+        assertTrue(assessment.judgment.id in decisionStep.references)
+        assertTrue(
+            assessment.recommendation.evidenceIds.all {
+                it in decisionStep.references
+            }
+        )
+    }
+
+    @Test
     fun `produces identical results for identical inputs`() {
         assertEquals(
             evaluator.evaluate(redMotoScenario),

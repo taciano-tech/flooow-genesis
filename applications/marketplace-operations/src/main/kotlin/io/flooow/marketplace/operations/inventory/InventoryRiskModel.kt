@@ -6,6 +6,9 @@ import io.flooow.kernel.language.Timestamp
 import io.flooow.kernel.model.Decision
 import io.flooow.kernel.model.Evidence
 import io.flooow.kernel.model.Observation
+import io.flooow.kernel.reasoning.DecisionContext
+import io.flooow.kernel.reasoning.EvaluationResult
+import io.flooow.kernel.reasoning.Hypothesis
 import io.flooow.kernel.reasoning.Judgment
 import java.time.LocalDate
 
@@ -58,17 +61,37 @@ data class InterventionAlternative(
     val expectedUnitsPreserved: Int
 )
 
+enum class ReasoningStage {
+    OBSERVATION,
+    EVIDENCE,
+    HYPOTHESIS,
+    JUDGMENT,
+    DECISION
+}
+
+data class ReasoningTraceStep(
+    val stage: ReasoningStage,
+    val conceptId: Identifier,
+    val references: Set<Identifier>
+)
+
 data class InventoryRiskAssessment(
     val input: InventoryRiskInput,
     val observations: List<Observation>,
     val evidences: List<Evidence>,
     val projection: InventoryProjection,
-    val judgment: Judgment,
+    val hypothesis: Hypothesis,
+    val evaluation: EvaluationResult,
+    val decisionContext: DecisionContext,
     val alternatives: List<InterventionAlternative>,
     val recommendation: Decision,
     val expectedImpact: String,
-    val trace: List<String>
-)
+    val trace: List<String>,
+    val reasoningTrace: List<ReasoningTraceStep>
+) {
+    val judgment: Judgment
+        get() = evaluation.judgment
+}
 
 internal fun certainEvidence(
     id: String,

@@ -262,7 +262,7 @@ To be completed when the experiment begins.
 - **Executor:** Codex, supervised by the repository owner
 - **Environment:** Windows, JVM toolchain 21, Gradle 9.4.0
 - **Build result:** Success (`gradlew.bat build --no-daemon`)
-- **Test result:** 56 tests passed; 0 failed; 0 skipped
+- **Test result:** 57 tests passed; 0 failed; 0 skipped
 - **Evidence location:** `applications/marketplace-operations/src/test`
 
 ### Initial Vertical Slice Observation
@@ -273,10 +273,12 @@ observations, evidence, a deterministic judgment, calculated inventory
 projections, intervention alternatives, a recommendation, expected impact, and
 a calculation trace.
 
-Five application tests demonstrated:
+Six application tests demonstrated:
 
 - explicit stock coverage, stockout date, shortage duration, and goal exposure;
 - traceability from observations and evidence to the recommendation;
+- preservation of the complete Observation → Evidence → Hypothesis → Judgment
+  → Decision chain through `EvaluationResult` and `DecisionContext`;
 - identical results for identical inputs;
 - no intervention when replenishment precedes the projected stockout;
 - rejection of invalid operational inputs.

@@ -5,6 +5,7 @@ import io.flooow.kernel.language.Identifier
 import io.flooow.kernel.language.Timestamp
 import io.flooow.kernel.model.Decision
 import io.flooow.kernel.model.Observation
+import io.flooow.kernel.reasoning.DecisionContext
 import io.flooow.kernel.reasoning.EvaluationRequest
 import io.flooow.kernel.reasoning.EvidenceSet
 import io.flooow.kernel.reasoning.Hypothesis
@@ -59,10 +60,16 @@ class InventoryRiskEvaluator {
 
         val alternatives = alternativesFor(projection)
         val selected = selectAlternative(projection, alternatives)
+        val decisionContext = DecisionContext(
+            hypothesis = hypothesis,
+            evidenceSet = reasoningResult.evaluatedEvidence,
+            judgment = reasoningResult.judgment
+        )
         val recommendation = Decision(
             id = Identifier("decision-${input.sku.lowercase()}-inventory-risk"),
             statement = selected.explanation,
-            evidenceIds = evidences.mapTo(linkedSetOf()) { it.id },
+            evidenceIds = decisionContext.evidenceSet.evidences
+                .mapTo(linkedSetOf()) { it.id },
             decidedAt = timestamp
         )
 
@@ -71,11 +78,20 @@ class InventoryRiskEvaluator {
             observations = observations,
             evidences = evidences,
             projection = projection,
-            judgment = reasoningResult.judgment,
+            hypothesis = hypothesis,
+            evaluation = reasoningResult,
+            decisionContext = decisionContext,
             alternatives = alternatives,
             recommendation = recommendation,
             expectedImpact = expectedImpactFor(projection, selected),
-            trace = traceFor(input, projection, selected)
+            trace = traceFor(input, projection, selected),
+            reasoningTrace = reasoningTraceFor(
+                observations = observations,
+                evidences = evidences,
+                hypothesis = hypothesis,
+                decisionContext = decisionContext,
+                recommendation = recommendation
+            )
         )
     }
 
@@ -185,6 +201,55 @@ class InventoryRiskEvaluator {
         "goal.unitsAtRisk=${projection.unitsAtRiskAgainstGoal}",
         "recommendation=${selected.type}"
     )
+
+    private fun reasoningTraceFor(
+        observations: List<Observation>,
+        evidences: List<io.flooow.kernel.model.Evidence>,
+        hypothesis: Hypothesis,
+        decisionContext: DecisionContext,
+        recommendation: Decision
+    ): List<ReasoningTraceStep> = buildList {
+        observations.forEach { observation ->
+            add(
+                ReasoningTraceStep(
+                    stage = ReasoningStage.OBSERVATION,
+                    conceptId = observation.id,
+                    references = emptySet()
+                )
+            )
+        }
+        evidences.forEach { evidence ->
+            add(
+                ReasoningTraceStep(
+                    stage = ReasoningStage.EVIDENCE,
+                    conceptId = evidence.id,
+                    references = evidence.observationIds
+                )
+            )
+        }
+        add(
+            ReasoningTraceStep(
+                stage = ReasoningStage.HYPOTHESIS,
+                conceptId = hypothesis.id,
+                references = decisionContext.evidenceSet.evidences
+                    .mapTo(linkedSetOf()) { it.id }
+            )
+        )
+        add(
+            ReasoningTraceStep(
+                stage = ReasoningStage.JUDGMENT,
+                conceptId = decisionContext.judgment.id,
+                references = setOf(decisionContext.judgment.hypothesisId)
+            )
+        )
+        add(
+            ReasoningTraceStep(
+                stage = ReasoningStage.DECISION,
+                conceptId = recommendation.id,
+                references = recommendation.evidenceIds + decisionContext.judgment.id
+            )
+        )
+    }
 
     private fun ceilingDivision(dividend: Int, divisor: Int): Int =
         if (dividend == 0) 0 else 1 + (dividend - 1) / divisor
