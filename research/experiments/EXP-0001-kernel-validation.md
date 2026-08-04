@@ -332,6 +332,12 @@ failures, errors, or skipped tests. This is Track B evidence for the Marketplace
 Operations workflow only; it does not promote an ontology candidate or complete
 EXP-0001.
 
+The controlled Track B fixture, expected semantic snapshot, and independent
+procedure are documented in `EXP-0001-TRACK-B-REPLICATION.md`. Package
+preparation and implementation-time execution do not satisfy the independent
+replication requirement. After adding the controlled comparison, the complete
+repository build passed with 71 tests and no failures, errors, or skipped tests.
+
 ### Interim Evaluation
 
 The collected evidence is assessed against every success criterion in

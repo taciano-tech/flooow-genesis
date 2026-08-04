@@ -40,3 +40,10 @@ evidence. Preparing this package does not constitute independent replication.
 - A failing comparison is a divergence and must be recorded rather than hidden.
 - A passing test does not prove universality or complete EXP-0001.
 - The original implementer must not fill the independent replication record.
+
+## Track B Package
+
+The separately controlled workflow sequence and its independent procedure are
+documented in `EXP-0001-TRACK-B-REPLICATION.md`. Track A and Track B comparisons
+must be reported separately so that a passing result in one track cannot hide a
+divergence in the other.
