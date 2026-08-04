@@ -103,4 +103,4 @@ The Kernel contains only experimentally validated concepts.
 |----|-------|--------|
 | EXP-0001 | Kernel Validation | Completed |
 | EXP-0002 | Conflicting Evidence Evaluation | Completed — Null Hypothesis Supported |
-| EXP-0003 | Evidence Relationship Validation | Planned — Protocol Review |
+| EXP-0003 | Evidence Relationship Validation | Planned — Fixture Freeze |

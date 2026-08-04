@@ -1,6 +1,6 @@
 # EXP-0003 — Evidence Relationship Validation
 
-**Status:** Planned — Protocol Review
+**Status:** Planned — Fixture Freeze
 
 **Protocol Version:** 1.0
 
@@ -432,3 +432,18 @@ reduction scenario separately.
 No fixture, prototype, result, architectural decision, or Kernel change is
 authorized by this document. After protocol approval, the next task is Phase 2:
 freeze implementation-independent fixtures and expected semantic snapshots.
+
+## 24. Fixture Freeze Record
+
+Fixture freeze version 1.0 was prepared on 2026-08-04 from protocol source
+commit `2adf94cdb0e9120e259378cd41283e2877839b14`.
+
+The implementation-independent manifest, canonical inputs, and expected
+semantic snapshot are stored under `research/experiments/fixtures/exp-0003`.
+They define both domains, both policies, all core and integrity scenarios, the
+neutral reduction oracle, ablation oracles, canonicalization rules, and fixed
+validation-error vocabulary.
+
+No executable harness or observed result is included. After this freeze is
+reviewed and merged, Phase 3 may implement the isolated prototype without
+changing these expected artifacts.
