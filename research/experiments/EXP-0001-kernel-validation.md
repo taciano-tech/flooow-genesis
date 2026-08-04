@@ -1,6 +1,6 @@
 # EXP-0001 — Kernel Validation
 
-**Status:** In Progress
+**Status:** Completed
 
 **Protocol Version:** 1.0
 
@@ -338,40 +338,59 @@ preparation and implementation-time execution do not satisfy the independent
 replication requirement. After adding the controlled comparison, the complete
 repository build passed with 71 tests and no failures, errors, or skipped tests.
 
-### Interim Evaluation
+### Evaluation History
 
 The collected evidence is assessed against every success criterion in
-`research/experiments/EXP-0001-INTERIM-EVALUATION.md`. The assessment supports
-eight of nine criteria within the accepted experimental scope after combining
-Track A reasoning and Track B workflow evidence. Independent replication is the
-remaining pending criterion, so the interim disposition remains **Continue
-Investigation**.
+`research/experiments/EXP-0001-INTERIM-EVALUATION.md`. Before independent
+replication, the assessment supported eight of nine criteria and retained the
+interim disposition **Continue Investigation**. Replication 001 subsequently
+provided the ninth criterion; the same report now records the final disposition
+**Preserve the Kernel**.
 
 ---
 
 ## 22. Replication Record
 
-To be completed after independent replication.
+Independent replication was executed from the frozen post-Track B evaluation
+baseline. The complete record, commands, environment, task provenance, and
+warnings are preserved in `EXP-0001-INDEPENDENT-REPLICATION-001.md`.
 
-- **Replication commit:** Pending
-- **Replication date:** Pending
-- **Replicator:** Pending
-- **Result:** Pending
-- **Observed divergences:** Pending
+- **Replication commit:** `effa2c1ed44d8ca70468eda04f6e09184d19c9d6`
+- **Replication date:** 2026-08-04
+- **Replicator:** OpenAI Codex independent replicator
+- **Track A result:** Successful; 1 of 1 canonical comparison passed
+- **Track B result:** Successful; 1 of 1 fresh canonical comparison passed
+- **Complete build:** Successful; 71 of 71 fresh tests passed
+- **Observed semantic divergences:** None
+- **Environment warnings:** Kotlin daemon and Gradle home access limitations;
+  documented fallbacks completed successfully
 
 ---
 
 ## 23. Final Result
 
-No final result has been reached. The accepted workflow baseline is implemented
-and controlled reproduction succeeds, but independent replication remains
-pending. The interim disposition is **Continue Investigation**.
+**Successful within the declared experimental scope.**
+
+All nine success criteria are supported for the accepted Marketplace Operations
+baseline. Independent Track A and fresh Track B comparisons matched their
+committed semantic snapshots, the fresh complete build passed 71 of 71 tests,
+and no semantic divergence was observed.
+
+This result demonstrates sufficiency for this workflow. It does not establish
+universal sufficiency across other domains, production environments, or
+unexercised ontology candidates.
 
 ---
 
 ## 24. Architectural Decision
 
-No architectural decision has been made. The current slice did not require a
-Kernel change, but that result is not evidence of universal sufficiency. No
-Kernel evolution is authorized while evidence collection and independent
-replication remain incomplete.
+**Preserve the current Kernel.**
+
+The experiment did not demonstrate a missing universal concept. Marketplace
+identity, temporal projections, occurrences, and workflow execution remained
+application-owned while existing Kernel language, reasoning, `Action`, and
+`Outcome` contracts were sufficient for the accepted baseline.
+
+No new Kernel primitive is authorized, and no draft ontology candidate is
+promoted by this decision. A future experiment may reopen Kernel evolution only
+with new evidence satisfying the repository's RFC and governance rules.

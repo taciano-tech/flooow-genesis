@@ -1,10 +1,10 @@
-# EXP-0001 Interim Evaluation — Post Track B
+# EXP-0001 Final Evaluation
 
 **Evaluation date:** 2026-08-04
 
-**Experiment status:** In Progress
+**Experiment status:** Completed
 
-**Interim disposition:** Continue Investigation
+**Final disposition:** Preserve the Kernel
 
 ## Purpose
 
@@ -52,11 +52,10 @@ and the separation of future evidence tracks are recorded in
 | The complete execution is traceable | Supported for the accepted baseline | Reasoning traces connect evidence to decisions; transition traces connect commands and rules to occurrences, snapshots, or rejections. | External action execution and live-system effects remain outside scope. |
 | Decisions can be explained from recorded evidence | Supported for the accepted baseline | Decision context, evaluated evidence, judgment, alternatives, recommendation, action, expected impact, and observed outcome remain distinguishable. | Ambiguous, conflicting, or variable-confidence evidence remains untested. |
 | Kernel invariants remain valid | Supported within exercised APIs | All 71 tests pass; the application consumes existing Kernel APIs without modifying them, and domain invariants are enforced outside the Kernel. | The result is bounded to the APIs and scenarios exercised. |
-| Another engineer can reproduce the result | Pending | Separate Track A and Track B fixtures, semantic snapshots, commands, and procedures are committed. | An independent engineer must execute both procedures and record every result or divergence. |
+| Another engineer can reproduce the result | Supported | Independent Track A and fresh Track B comparisons passed from commit `effa2c1`; the fresh complete build passed 71 of 71 tests with no semantic divergence. | Replication is bounded to the recorded environment and baseline. |
 
 `Supported` means that the current evidence directly supports the criterion only
-within the stated scope. `Pending` means that the required independent evidence
-has not yet been collected. No scoped status is a claim of universality.
+within the stated scope. No scoped status is a claim of universality.
 
 ## Limitations and Threats to Validity
 
@@ -74,31 +73,30 @@ has not yet been collected. No scoped status is a claim of universality.
   universal Kernel primitives.
 - The transition scenarios are deliberately small and do not exercise
   concurrency, idempotency, partial failure, or conflicting command sources.
-- The reproduction test has been run by the implementation process, not by an
-  independent replicator.
+- Implementation-time reproduction was not independent; the separately
+  recorded replication 001 later executed both tracks, including a forced
+  fresh Track B run and complete build.
 - Passing tests demonstrate consistency of the implemented behavior, not the
   universality of the Kernel ontology.
 
-## Interim Conclusion
+## Final Conclusion
 
 The combined evidence supports deterministic, traceable, and explainable
 reasoning and workflow transitions for the accepted Marketplace Operations
-baseline without a Kernel change. Eight of the nine success criteria are now
-supported within their declared scope. Independent replication remains
-pending, so the experiment does not yet satisfy every success criterion and
-does not support a final architectural conclusion.
+baseline without a Kernel change. All nine success criteria are supported
+within their declared scope. Independent reproduction matched the committed
+Track A and Track B semantic evidence, and the fresh complete build passed all
+71 tests without semantic divergence.
 
-According to the experiment decision matrix, the correct interim disposition
-is **Continue Investigation**.
+According to the experiment decision matrix, the final disposition is
+**Preserve the Kernel**.
 
-## Required Next Evidence
+## Future Evidence Boundary
 
-1. An independent engineer executes `EXP-0001-REPLICATION.md` for Track A and
-   records every result or divergence.
-2. The same independent review executes
-   `EXP-0001-TRACK-B-REPLICATION.md` and records Track B separately.
-3. The success-criteria matrix is reevaluated from the independent records
-   without treating success in one track as evidence for the other.
+Future experiments should evaluate broader domains, conflicting evidence,
+variable confidence, concurrent commands, partial failures, idempotency, and
+live action outcomes. Those are new evidence boundaries rather than unfinished
+EXP-0001 criteria.
 
-Until that evidence exists, EXP-0001 remains **In Progress**, the independent
-replication record remains **Pending**, and no Kernel evolution is authorized.
+EXP-0001 is **Completed**. Its result preserves the current Kernel and does not
+authorize new primitives or promote draft ontology candidates.

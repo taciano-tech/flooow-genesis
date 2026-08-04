@@ -2,9 +2,9 @@
 
 **Date:** 2026-08-04
 
-**Status:** Active
+**Status:** Closed with EXP-0001
 
-**Disposition:** Continue Investigation
+**Disposition when issued:** Continue Investigation
 
 ## Reason for Amendment
 
@@ -104,12 +104,18 @@ decision and must not be folded silently into EXP-0001.
 
 ## Completion Impact
 
-EXP-0001 remains **In Progress** with the disposition **Continue
-Investigation**. Its original full-workflow success criteria cannot be marked
-complete until Track B has an accepted operational design and executable
-evidence. Track A may still be independently replicated and assessed within its
-declared scope.
+At the time of this amendment, EXP-0001 remained **In Progress** with the
+disposition **Continue Investigation**. Its original full-workflow success
+criteria could not be marked complete until Track B had an accepted operational
+design and executable evidence.
 
 This amendment changes the interpretation of future evidence. It does not alter
 the original hypothesis, fill the replication record, or authorize Kernel
 evolution.
+
+## Closure
+
+Track B was subsequently designed, executed, packaged, and independently
+reproduced. EXP-0001 completed with the final disposition **Preserve the
+Kernel**. The amendment remains part of the audit history and did not authorize
+or promote any Kernel primitive.
