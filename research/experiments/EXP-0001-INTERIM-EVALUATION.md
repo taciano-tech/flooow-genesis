@@ -1,4 +1,4 @@
-# EXP-0001 Interim Evaluation
+# EXP-0001 Interim Evaluation — Post Track B
 
 **Evaluation date:** 2026-08-04
 
@@ -8,10 +8,9 @@
 
 ## Purpose
 
-This report evaluates the evidence collected by the first Marketplace
-Operations vertical slice against the success criteria of EXP-0001. It does not
-replace independent replication, complete the experiment, or authorize a
-Kernel change.
+This report evaluates the combined Track A reasoning slice and Track B workflow
+evidence against the success criteria of EXP-0001. It does not replace
+independent replication, complete the experiment, or authorize a Kernel change.
 
 ## Evidence Baseline
 
@@ -22,14 +21,19 @@ The evaluated baseline contains:
 - the independent replication procedure;
 - boundary scenarios for zero inventory, partial-day coverage, replenishment
   timing, commercial-period limits, and already-achieved goals;
-- 63 passing repository tests on the recorded execution environment;
+- the accepted RFC-0003 Track B operational baseline;
+- executable accepted and rejected inventory transitions;
+- immutable snapshots, occurrences, transition traces, interventions, and
+  outcomes;
+- controlled Track B input and expected semantic snapshot;
+- 71 passing repository tests on the recorded execution environment;
 - successful repository builds and GitHub Actions runs for the evidence changes;
 - no modification to the Kernel while producing the vertical slice.
 
-The implementation exercises the Kernel reasoning chain `Observation ->
-Evidence -> Hypothesis -> Judgment -> Decision`. It does not yet implement the
-`Entity`, `Event`, `State`, and `Process` workflow described by the original
-experimental design.
+Track A exercises the Kernel reasoning chain `Observation -> Evidence ->
+Hypothesis -> Judgment -> Decision`. Track B exercises the amended operational
+workflow as domain-owned SKU identity, temporal inventory snapshots,
+occurrences, accepted and rejected transitions, actions, and outcomes.
 
 Repository inspection further established that those four workflow concepts
 are absent from the executable Kernel baseline. Their effect on the protocol
@@ -40,20 +44,19 @@ and the separation of future evidence tracks are recorded in
 
 | Success criterion | Status | Current evidence | Remaining evidence |
 |---|---|---|---|
-| The workflow is completely represented | Partial | The inventory-risk assessment represents inputs, projections, evidence, reasoning, alternatives, recommendation, and expected impact. | Resolve the workflow concepts under the protocol amendment, then execute the accepted operational design and its outcome. |
-| No additional Kernel primitive is required | Partial | The current reasoning slice required no Kernel modification. | A single slice cannot establish sufficiency for the complete workflow or universality beyond it. |
-| Valid transitions produce expected states | Pending | The evaluator produces expected deterministic projections and recommendations. | Explicit state transitions and resulting entity states have not been exercised. |
-| Invalid transitions are rejected | Partial | Invalid operational inputs are rejected by application invariants. | Invalid state-transition attempts have not been represented or rejected through a workflow model. |
-| Identical inputs produce identical outputs | Supported | Repeated execution tests and the committed semantic snapshot compare deterministic results. | Independent replication must confirm the result in another execution context. |
-| The complete execution is traceable | Supported for the current slice | Calculation and structured reasoning traces connect observations and evidence to the recommendation. | Traceability of events, state transitions, process execution, action, and outcome remains untested. |
-| Decisions can be explained from recorded evidence | Supported for the current slice | The decision context, evaluated evidence, judgment, alternatives, and recommendation are retained. | Evidence with ambiguity, conflicting signals, or variable confidence remains untested. |
-| Kernel invariants remain valid | Supported within exercised APIs | The full repository suite passes and the application consumes existing Kernel APIs without modifying them. | Unexercised workflow primitives and transition invariants cannot be assessed from this slice. |
-| Another engineer can reproduce the result | Pending | A controlled fixture, expected snapshot, commands, and replication procedure are committed. | An independent engineer must execute the procedure and fill the replication record. |
+| The workflow is completely represented | Supported for the accepted baseline | Track A retains the complete reasoning cycle; Track B represents identity, temporal projections, occurrences, accepted and rejected transitions, action, expected impact, and outcome. | Broader operational completeness remains outside the declared experimental scope. |
+| No additional Kernel primitive is required | Supported for this experiment | Both tracks were implemented without modifying the Kernel or adding shadow universal types. | This does not prove sufficiency across other workflows or domains. |
+| Valid transitions produce expected states | Supported for the accepted baseline | Receipt and consumption produce immutable later snapshots with the expected quantities and occurrences. | Independent replication must confirm the controlled sequence externally. |
+| Invalid transitions are rejected | Supported for the accepted baseline | SKU mismatch, non-forward time, and over-consumption return typed rejections, preserve the prior snapshot, and emit no accepted occurrence. | Additional domain rules may expose limitations in future experiments. |
+| Identical inputs produce identical outputs | Supported | Repeated executions are structurally equal, and both tracks reproduce committed semantic snapshots. | Independent replication must confirm the results in another execution context. |
+| The complete execution is traceable | Supported for the accepted baseline | Reasoning traces connect evidence to decisions; transition traces connect commands and rules to occurrences, snapshots, or rejections. | External action execution and live-system effects remain outside scope. |
+| Decisions can be explained from recorded evidence | Supported for the accepted baseline | Decision context, evaluated evidence, judgment, alternatives, recommendation, action, expected impact, and observed outcome remain distinguishable. | Ambiguous, conflicting, or variable-confidence evidence remains untested. |
+| Kernel invariants remain valid | Supported within exercised APIs | All 71 tests pass; the application consumes existing Kernel APIs without modifying them, and domain invariants are enforced outside the Kernel. | The result is bounded to the APIs and scenarios exercised. |
+| Another engineer can reproduce the result | Pending | Separate Track A and Track B fixtures, semantic snapshots, commands, and procedures are committed. | An independent engineer must execute both procedures and record every result or divergence. |
 
 `Supported` means that the current evidence directly supports the criterion only
-within the stated scope. `Partial` means that relevant evidence exists but does
-not cover the criterion as written. `Pending` means that the experimental
-design has not yet exercised the criterion.
+within the stated scope. `Pending` means that the required independent evidence
+has not yet been collected. No scoped status is a claim of universality.
 
 ## Limitations and Threats to Validity
 
@@ -64,11 +67,13 @@ design has not yet exercised the criterion.
   evidence is not represented.
 - The evaluator constructs a hypothesis that its own evidence supports; it does
   not compare competing hypotheses or exercise a negative judgment path.
-- The slice ends with a recommendation. It does not execute an intervention or
-  observe an outcome that could confirm or contradict the decision.
-- Input validation is not evidence of valid or invalid state transitions.
-- The original `Entity`, `Event`, `State`, and `Process` variables and dependent
-  measures remain unexercised.
+- Track B records an intervention and outcome but does not execute an external
+  marketplace action or establish causal attribution.
+- Track B uses application-owned identity, snapshots, occurrences, and workflow
+  behavior; it does not validate `Entity`, `State`, `Event`, or `Process` as
+  universal Kernel primitives.
+- The transition scenarios are deliberately small and do not exercise
+  concurrency, idempotency, partial failure, or conflicting command sources.
 - The reproduction test has been run by the implementation process, not by an
   independent replicator.
 - Passing tests demonstrate consistency of the implemented behavior, not the
@@ -76,28 +81,24 @@ design has not yet exercised the criterion.
 
 ## Interim Conclusion
 
-The collected evidence supports deterministic, traceable, and explainable
-reasoning for the Marketplace Operations inventory-risk slice without a Kernel
-change. It does not yet satisfy every success criterion of EXP-0001 and does not
-support accepting or rejecting the hypothesis for a complete organizational
-workflow.
+The combined evidence supports deterministic, traceable, and explainable
+reasoning and workflow transitions for the accepted Marketplace Operations
+baseline without a Kernel change. Eight of the nine success criteria are now
+supported within their declared scope. Independent replication remains
+pending, so the experiment does not yet satisfy every success criterion and
+does not support a final architectural conclusion.
 
 According to the experiment decision matrix, the correct interim disposition
 is **Continue Investigation**.
 
 ## Required Next Evidence
 
-1. An independent engineer executes `EXP-0001-REPLICATION.md` and records every
-   result or divergence.
-2. A separately reviewed design resolves the executable status and operational
-   meaning of identity, temporal state, occurrence, and workflow execution as
-   required by `EXP-0001-PROTOCOL-AMENDMENT-001.md`. The current proposal is
-   `docs/vision/RFC-0003-TRACK-B-WORKFLOW-OPERATIONAL-DESIGN.md`.
-3. Only after that design is accepted, a versioned workflow experiment captures
-   valid and invalid transitions, resulting states, occurrences, the workflow
-   outcome, and the complete trace.
-4. The success-criteria matrix is reevaluated without combining Track A
-   reasoning evidence with unimplemented Track B workflow measures.
+1. An independent engineer executes `EXP-0001-REPLICATION.md` for Track A and
+   records every result or divergence.
+2. The same independent review executes
+   `EXP-0001-TRACK-B-REPLICATION.md` and records Track B separately.
+3. The success-criteria matrix is reevaluated from the independent records
+   without treating success in one track as evidence for the other.
 
-Until that evidence exists, EXP-0001 remains **In Progress**, the replication
-record remains **Pending**, and no Kernel evolution is authorized.
+Until that evidence exists, EXP-0001 remains **In Progress**, the independent
+replication record remains **Pending**, and no Kernel evolution is authorized.
