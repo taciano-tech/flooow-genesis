@@ -126,3 +126,14 @@ A context-independent engineer must execute the isolated harness and full build
 from the committed evidence baseline, compare the complete snapshot, and report
 every semantic, test-count, and environmental divergence. Until that fresh
 replication is complete, no ADR or Kernel implementation is authorized.
+
+## Subsequent Replication Outcome
+
+Context-independent replication from commit
+`29974ca59e6c9e03acdf702e666a16477798c53b` reproduced the complete 101-line
+snapshot, all 70 frozen comparable keys, reduction, ablations, structural
+validation, and the 73-test build without a semantic divergence.
+
+The final experiment evaluation is recorded separately in
+`EXP-0003-FINAL-EVALUATION.md`. This section preserves the primary result while
+linking its completed replication requirement.
