@@ -1,6 +1,6 @@
 # EXP-0003 — Evidence Relationship Validation
 
-**Status:** Planned — Fixture Freeze
+**Status:** In Progress — Primary Characterization Complete
 
 **Protocol Version:** 1.0
 
@@ -447,3 +447,21 @@ validation-error vocabulary.
 No executable harness or observed result is included. After this freeze is
 reviewed and merged, Phase 3 may implement the isolated prototype without
 changing these expected artifacts.
+
+## 25. Primary Characterization Record
+
+The isolated experimental harness was executed fresh on 2026-08-04 from source
+commit `5d5b850af18065638b4388e93de934a4063c441c` without changing the production
+Kernel or frozen fixtures.
+
+All 24 core traces and I1–I12 matched the frozen expectations. The neutral
+reduction oracle recorded three real output collisions and returned `FAIL` for
+the existing contracts. All three predeclared ablations failed for their
+expected semantic or auditability reason.
+
+The hypothesis gains primary support under the declared experimental
+conditions. Full evidence and assessment are recorded in
+`EXP-0003-PRIMARY-OBSERVED.snapshot` and `EXP-0003-PRIMARY-RESULT.md`.
+
+This is not a final experiment decision. Independent fresh replication remains
+required before an ADR or Kernel implementation may be considered.
