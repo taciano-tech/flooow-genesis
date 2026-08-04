@@ -31,11 +31,16 @@ Evidence -> Hypothesis -> Judgment -> Decision`. It does not yet implement the
 `Entity`, `Event`, `State`, and `Process` workflow described by the original
 experimental design.
 
+Repository inspection further established that those four workflow concepts
+are absent from the executable Kernel baseline. Their effect on the protocol
+and the separation of future evidence tracks are recorded in
+`EXP-0001-PROTOCOL-AMENDMENT-001.md`.
+
 ## Success-Criteria Assessment
 
 | Success criterion | Status | Current evidence | Remaining evidence |
 |---|---|---|---|
-| The workflow is completely represented | Partial | The inventory-risk assessment represents inputs, projections, evidence, reasoning, alternatives, recommendation, and expected impact. | Execute the organizational workflow as `Entity`, `Event`, `State`, and `Process`, including its operational outcome. |
+| The workflow is completely represented | Partial | The inventory-risk assessment represents inputs, projections, evidence, reasoning, alternatives, recommendation, and expected impact. | Resolve the workflow concepts under the protocol amendment, then execute the accepted operational design and its outcome. |
 | No additional Kernel primitive is required | Partial | The current reasoning slice required no Kernel modification. | A single slice cannot establish sufficiency for the complete workflow or universality beyond it. |
 | Valid transitions produce expected states | Pending | The evaluator produces expected deterministic projections and recommendations. | Explicit state transitions and resulting entity states have not been exercised. |
 | Invalid transitions are rejected | Partial | Invalid operational inputs are rejected by application invariants. | Invalid state-transition attempts have not been represented or rejected through a workflow model. |
@@ -84,12 +89,14 @@ is **Continue Investigation**.
 
 1. An independent engineer executes `EXP-0001-REPLICATION.md` and records every
    result or divergence.
-2. A separately reviewed extension exercises a minimal executable workflow with
-   `Entity`, `Event`, `State`, and `Process`, including valid and invalid state
-   transitions.
-3. The execution record captures resulting states, emitted events, the process
+2. A separately reviewed design resolves the executable status and operational
+   meaning of identity, temporal state, occurrence, and workflow execution as
+   required by `EXP-0001-PROTOCOL-AMENDMENT-001.md`.
+3. Only after that design is accepted, a versioned workflow experiment captures
+   valid and invalid transitions, resulting states, occurrences, the workflow
    outcome, and the complete trace.
-4. The success-criteria matrix is reevaluated from the combined evidence.
+4. The success-criteria matrix is reevaluated without combining Track A
+   reasoning evidence with unimplemented Track B workflow measures.
 
 Until that evidence exists, EXP-0001 remains **In Progress**, the replication
 record remains **Pending**, and no Kernel evolution is authorized.
