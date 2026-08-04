@@ -1,6 +1,6 @@
 # EXP-0003 — Evidence Relationship Validation
 
-**Status:** In Progress — Primary Characterization Complete
+**Status:** Completed — Hypothesis Supported
 
 **Protocol Version:** 1.0
 
@@ -465,3 +465,32 @@ conditions. Full evidence and assessment are recorded in
 
 This is not a final experiment decision. Independent fresh replication remains
 required before an ADR or Kernel implementation may be considered.
+
+## 26. Independent Replication Record
+
+A context-independent engineer replicated the experiment on 2026-08-04 from
+frozen commit `29974ca59e6c9e03acdf702e666a16477798c53b`.
+
+- complete normalized snapshot: 101 of 101 lines equal;
+- frozen core traces: 24 of 24 equal;
+- frozen integrity keys: 46 of 46 equal;
+- complete fresh build: 73 tests, zero failures, errors, or skips;
+- semantic divergences: none.
+
+Reduction, all three ablations, structural validation, deterministic behavior,
+and cross-domain contract shape reproduced. Full provenance is recorded in
+`EXP-0003-INDEPENDENT-REPLICATION-001.md`.
+
+## 27. Final Decision
+
+The hypothesis is supported under the declared experimental conditions, and
+the null hypothesis is not supported. The reproduced evidence establishes the
+sufficiency and tested necessity of contextual relationship direction,
+structured judgment direction, and retained relationship contributions.
+
+Per the architectural decision matrix, the authorized next step is to
+**prepare an ADR; do not implement yet**. The complete assessment and candidate
+classification are recorded in `EXP-0003-FINAL-EVALUATION.md`.
+
+No primitive is promoted and no production Kernel change is authorized by this
+experiment.
