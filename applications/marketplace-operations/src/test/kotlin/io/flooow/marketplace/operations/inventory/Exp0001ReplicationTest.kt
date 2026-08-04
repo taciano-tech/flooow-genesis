@@ -61,7 +61,7 @@ class Exp0001ReplicationTest {
     private fun resourceText(resource: String): String =
         requireNotNull(Exp0001ReplicationTest::class.java.getResource(resource)) {
             "Missing expected snapshot: $resource"
-        }.readText()
+        }.readText().replace("\r\n", "\n")
 
     private fun Properties.required(name: String): String =
         requireNotNull(getProperty(name)) { "Missing fixture property: $name" }
