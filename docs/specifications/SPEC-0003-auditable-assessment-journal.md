@@ -236,6 +236,7 @@ Pinned production dependencies:
 ```text
 org.jetbrains.exposed:exposed-core:1.4.0
 org.jetbrains.exposed:exposed-jdbc:1.4.0
+org.jetbrains.exposed:exposed-java-time:1.4.0
 org.flywaydb:flyway-core:13.2.0
 org.flywaydb:flyway-database-postgresql:13.2.0
 org.postgresql:postgresql:42.7.12
