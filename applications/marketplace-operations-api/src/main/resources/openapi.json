@@ -17,8 +17,13 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Deterministic inventory-risk assessment",
+          "201": {
+            "description": "Durable inventory-risk assessment created",
+            "headers": {
+              "Location": {
+                "schema": { "type": "string" }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/InventoryRiskResponse" }
@@ -28,7 +33,35 @@
           "400": { "$ref": "#/components/responses/Problem" },
           "415": { "$ref": "#/components/responses/Problem" },
           "422": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" },
           "500": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/marketplace-operations/inventory-risk-assessments/{assessmentId}": {
+      "get": {
+        "operationId": "getInventoryRiskAssessment",
+        "parameters": [
+          {
+            "name": "assessmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Persisted inventory-risk assessment",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InventoryRiskResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "404": { "$ref": "#/components/responses/Problem" },
+          "500": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" }
         }
       }
     },
@@ -117,8 +150,10 @@
       "InventoryRiskResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["sku", "observedOn", "projection", "recommendation", "expectedImpact", "trace"],
+        "required": ["assessmentId", "recordedAt", "sku", "observedOn", "projection", "recommendation", "expectedImpact", "trace"],
         "properties": {
+          "assessmentId": { "type": "string", "format": "uuid" },
+          "recordedAt": { "type": "string", "format": "date-time" },
           "sku": { "type": "string" },
           "observedOn": { "type": "string", "format": "date" },
           "projection": { "$ref": "#/components/schemas/InventoryProjection" },

@@ -16,6 +16,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class ApplicationTest {
@@ -29,21 +31,31 @@ class ApplicationTest {
             setBody(redMotoRequest)
         }
 
-        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(HttpStatusCode.Created, response.status)
+        assertEquals(
+            "$assessmentPath/11111111-1111-4111-8111-111111111111",
+            response.headers["Location"]
+        )
         assertEquals(ContentType.Application.Json, response.contentType()?.withoutParameters())
         assertEquals(resource("/red-moto-success.json").trimEnd(), response.bodyAsText())
     }
 
     @Test
-    fun `repeating the same request is byte equivalent`() = testApplication {
+    fun `equivalent requests have stable business result and distinct identities`() = testApplication {
         application { module() }
 
         suspend fun execute() = client.post(assessmentPath) {
             contentType(ContentType.Application.Json)
             setBody(redMotoRequest)
-        }.bodyAsText()
+        }.bodyAsText().let { Json.parseToJsonElement(it).jsonObject }
 
-        assertEquals(execute(), execute())
+        val first = execute()
+        val second = execute()
+        assertNotEquals(first.getValue("assessmentId"), second.getValue("assessmentId"))
+        assertEquals(
+            first.filterKeys { it !in setOf("assessmentId", "recordedAt") },
+            second.filterKeys { it !in setOf("assessmentId", "recordedAt") }
+        )
     }
 
     @Test
@@ -57,13 +69,41 @@ class ApplicationTest {
         }
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
 
-        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(HttpStatusCode.Created, response.status)
         assertFalse(body.getValue("projection").jsonObject
             .getValue("shortageProjected").jsonPrimitive.boolean)
         assertEquals(
             "TAKE_NO_ACTION",
             body.getValue("recommendation").jsonObject.getValue("type").jsonPrimitive.content
         )
+    }
+
+    @Test
+    fun `created assessment is retrievable from location`() = testApplication {
+        application { module() }
+        val created = client.post(assessmentPath) {
+            contentType(ContentType.Application.Json)
+            setBody(redMotoRequest)
+        }
+        val location = assertNotNull(created.headers["Location"])
+
+        val retrieved = client.get(location)
+
+        assertEquals(HttpStatusCode.OK, retrieved.status)
+        assertEquals(created.bodyAsText(), retrieved.bodyAsText())
+    }
+
+    @Test
+    fun `malformed and missing assessment identifiers use specific problems`() = testApplication {
+        application { module() }
+
+        val malformed = client.get("$assessmentPath/not-a-uuid")
+        val missing = client.get(
+            "$assessmentPath/99999999-9999-4999-8999-999999999999"
+        )
+
+        assertProblem(malformed.status, malformed.bodyAsText(), 400, "MALFORMED_ASSESSMENT_ID")
+        assertProblem(missing.status, missing.bodyAsText(), 404, "ASSESSMENT_NOT_FOUND")
     }
 
     @Test
@@ -168,7 +208,7 @@ class ApplicationTest {
     @Test
     fun `unexpected failure returns generic 500 without disclosure`() = testApplication {
         application {
-            configureApi { error("secret filesystem C:/internal/path") }
+            configureApi(record = { error("secret filesystem C:/internal/path") })
         }
 
         val response = client.post(assessmentPath) {
@@ -186,7 +226,7 @@ class ApplicationTest {
     @Test
     fun `health endpoints are available without business evaluation`() = testApplication {
         application {
-            configureApi { error("business evaluation must not run") }
+            configureApi(record = { error("business evaluation must not run") })
         }
 
         listOf("/health/live", "/health/ready").forEach { path ->
