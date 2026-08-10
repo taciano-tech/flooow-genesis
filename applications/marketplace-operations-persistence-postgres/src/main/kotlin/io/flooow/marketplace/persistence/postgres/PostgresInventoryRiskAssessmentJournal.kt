@@ -12,7 +12,9 @@ import io.flooow.marketplace.operations.inventory.RecordedInventoryRiskAssessmen
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -29,6 +31,68 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.UUID
 import java.time.ZoneOffset
+
+private const val EVENT_SOURCE = "https://flooow.io/marketplace-operations"
+private const val EVENT_TYPE =
+    "io.flooow.marketplace.inventory-risk-assessment.recorded.v1"
+private const val EVENT_SCHEMA =
+    "https://flooow.io/schemas/events/inventory-risk-assessment-recorded.v1.json"
+private const val EVENT_CONTENT_TYPE = "application/cloudevents+json; charset=UTF-8"
+
+fun interface IntegrationEventIdentifierFactory {
+    fun create(): UUID
+}
+
+private class UuidIntegrationEventIdentifierFactory : IntegrationEventIdentifierFactory {
+    override fun create(): UUID = UUID.randomUUID()
+}
+
+internal data class InventoryRiskAssessmentRecordedEvent(
+    val id: UUID,
+    val assessmentId: UUID,
+    val source: String,
+    val type: String,
+    val subject: String,
+    val occurredAt: java.time.Instant,
+    val contentType: String,
+    val structuredJson: String
+) {
+    companion object {
+        fun from(record: RecordedInventoryRiskAssessment, id: UUID): InventoryRiskAssessmentRecordedEvent {
+            val assessmentId = UUID.fromString(record.assessmentId)
+            val subject = "/inventory-risk-assessments/$assessmentId"
+            val envelope = buildJsonObject {
+                put("specversion", "1.0")
+                put("id", id.toString())
+                put("source", EVENT_SOURCE)
+                put("type", EVENT_TYPE)
+                put("subject", subject)
+                put("time", record.recordedAt.toString())
+                put("datacontenttype", "application/json")
+                put("dataschema", EVENT_SCHEMA)
+                put("data", buildJsonObject {
+                    put("assessmentId", assessmentId.toString())
+                    put("sku", record.input.sku)
+                    put("observedOn", record.input.observedOn.toString())
+                    put("shortageProjected", record.projection.shortageProjected)
+                    put("unitsAtRiskAgainstGoal", record.projection.unitsAtRiskAgainstGoal)
+                    put("recommendationType", record.recommendation.type.name)
+                    put("expectedUnitsPreserved", record.recommendation.expectedUnitsPreserved)
+                })
+            }
+            return InventoryRiskAssessmentRecordedEvent(
+                id = id,
+                assessmentId = assessmentId,
+                source = EVENT_SOURCE,
+                type = EVENT_TYPE,
+                subject = subject,
+                occurredAt = record.recordedAt,
+                contentType = EVENT_CONTENT_TYPE,
+                structuredJson = Json.encodeToString(envelope)
+            )
+        }
+    }
+}
 
 data class PostgresConfiguration(
     val url: String,
@@ -55,12 +119,17 @@ data class PostgresConfiguration(
 }
 
 class PostgresInventoryRiskAssessmentJournal private constructor(
-    private val database: Database
+    private val database: Database,
+    private val eventIdentifierFactory: IntegrationEventIdentifierFactory
 ) : InventoryRiskAssessmentJournal {
 
     override fun append(record: RecordedInventoryRiskAssessment) {
         databaseOperation {
             transaction(database) {
+                val event = InventoryRiskAssessmentRecordedEvent.from(
+                    record,
+                    eventIdentifierFactory.create()
+                )
                 AssessmentJournalTable.insert {
                     it[assessmentId] = UUID.fromString(record.assessmentId)
                     it[schemaVersion] = record.schemaVersion.toShort()
@@ -91,6 +160,16 @@ class PostgresInventoryRiskAssessmentJournal private constructor(
                     it[requestDigest] = record.requestDigest
                     it[resultDigest] = record.resultDigest
                 }
+                IntegrationEventOutboxTable.insert {
+                    it[eventId] = event.id
+                    it[assessmentId] = event.assessmentId
+                    it[eventSource] = event.source
+                    it[eventType] = event.type
+                    it[subject] = event.subject
+                    it[occurredAt] = event.occurredAt.atOffset(ZoneOffset.UTC)
+                    it[contentType] = event.contentType
+                    it[eventJson] = event.structuredJson
+                }
             }
         }
     }
@@ -120,7 +199,11 @@ class PostgresInventoryRiskAssessmentJournal private constructor(
     }
 
     companion object {
-        fun connect(configuration: PostgresConfiguration): PostgresInventoryRiskAssessmentJournal {
+        fun connect(
+            configuration: PostgresConfiguration,
+            eventIdentifierFactory: IntegrationEventIdentifierFactory =
+                UuidIntegrationEventIdentifierFactory()
+        ): PostgresInventoryRiskAssessmentJournal {
             try {
                 Flyway.configure()
                     .dataSource(configuration.url, configuration.user, configuration.password)
@@ -132,12 +215,23 @@ class PostgresInventoryRiskAssessmentJournal private constructor(
                     user = configuration.user,
                     password = configuration.password
                 )
-                return PostgresInventoryRiskAssessmentJournal(database)
+                return PostgresInventoryRiskAssessmentJournal(database, eventIdentifierFactory)
             } catch (error: Exception) {
                 throw PersistenceUnavailableException(error)
             }
         }
     }
+}
+
+private object IntegrationEventOutboxTable : Table("integration_event_outbox") {
+    val eventId = javaUUID("event_id")
+    val assessmentId = javaUUID("assessment_id")
+    val eventSource = text("event_source")
+    val eventType = text("event_type")
+    val subject = text("subject")
+    val occurredAt = timestampWithTimeZone("occurred_at")
+    val contentType = text("content_type")
+    val eventJson: Column<String> = registerColumn("event_json", JsonbTextColumnType())
 }
 
 private object AssessmentJournalTable : Table("inventory_risk_assessment_journal") {
