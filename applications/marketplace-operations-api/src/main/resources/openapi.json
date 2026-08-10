@@ -1,0 +1,190 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Flooow Marketplace Operations API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/marketplace-operations/inventory-risk-assessments": {
+      "post": {
+        "operationId": "assessInventoryRisk",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/InventoryRiskRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deterministic inventory-risk assessment",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InventoryRiskResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "415": { "$ref": "#/components/responses/Problem" },
+          "422": { "$ref": "#/components/responses/Problem" },
+          "500": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "liveness",
+        "responses": {
+          "200": {
+            "description": "Process is live",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Health" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "readiness",
+        "responses": {
+          "200": {
+            "description": "Process is ready",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Health" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "openApiDocument",
+        "responses": {
+          "200": {
+            "description": "Committed OpenAPI 3.1 contract",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "Problem": {
+        "description": "Problem detail",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/Problem" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "InventoryRiskRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sku",
+          "periodEnd",
+          "targetUnits",
+          "unitsSold",
+          "availableUnits",
+          "dailySalesVelocity",
+          "observedOn",
+          "expectedReplenishmentOn"
+        ],
+        "properties": {
+          "sku": { "type": "string", "minLength": 1 },
+          "periodEnd": { "type": "string", "format": "date" },
+          "targetUnits": { "type": "integer", "minimum": 1 },
+          "unitsSold": { "type": "integer", "minimum": 0 },
+          "availableUnits": { "type": "integer", "minimum": 0 },
+          "dailySalesVelocity": { "type": "integer", "minimum": 1 },
+          "observedOn": { "type": "string", "format": "date" },
+          "expectedReplenishmentOn": { "type": "string", "format": "date" }
+        }
+      },
+      "InventoryRiskResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sku", "observedOn", "projection", "recommendation", "expectedImpact", "trace"],
+        "properties": {
+          "sku": { "type": "string" },
+          "observedOn": { "type": "string", "format": "date" },
+          "projection": { "$ref": "#/components/schemas/InventoryProjection" },
+          "recommendation": { "$ref": "#/components/schemas/Recommendation" },
+          "expectedImpact": { "type": "string" },
+          "trace": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "InventoryProjection": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "stockCoverageDays",
+          "projectedStockoutOn",
+          "expectedReplenishmentOn",
+          "projectedStockoutDays",
+          "unitsPotentiallyUnavailable",
+          "unitsRemainingToGoal",
+          "unitsAtRiskAgainstGoal",
+          "shortageProjected"
+        ],
+        "properties": {
+          "stockCoverageDays": { "type": "integer" },
+          "projectedStockoutOn": { "type": "string", "format": "date" },
+          "expectedReplenishmentOn": { "type": "string", "format": "date" },
+          "projectedStockoutDays": { "type": "integer" },
+          "unitsPotentiallyUnavailable": { "type": "integer" },
+          "unitsRemainingToGoal": { "type": "integer" },
+          "unitsAtRiskAgainstGoal": { "type": "integer" },
+          "shortageProjected": { "type": "boolean" }
+        }
+      },
+      "Recommendation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "explanation", "expectedUnitsPreserved"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["EXPEDITE_REPLENISHMENT", "REDUCE_PROMOTIONAL_EXPOSURE", "TAKE_NO_ACTION"]
+          },
+          "explanation": { "type": "string" },
+          "expectedUnitsPreserved": { "type": "integer" }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "title", "status", "detail", "instance", "code"],
+        "properties": {
+          "type": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "status": { "type": "integer" },
+          "detail": { "type": "string" },
+          "instance": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      },
+      "Health": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status"],
+        "properties": {
+          "status": { "type": "string", "const": "UP" }
+        }
+      }
+    }
+  }
+}
