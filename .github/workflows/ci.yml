@@ -48,25 +48,82 @@ jobs:
           POSTGRES_PASSWORD: ci-runtime-only
           FLOOOW_SERVICE_TOKEN: ci-only-service-token-000000000000000000000000000000000
           FLOOOW_ENVIRONMENT: ci
+          JAEGER_PORT: "16686"
         run: |
           docker compose config --quiet
+          docker compose config | grep -q 'c5918f78992ee73b0d6f0e599423ac5ec52dd5d9726733114d6eca53d5a32ed5'
+          docker compose config | grep -q '46a886260e04002d8f45e213fc39063fa11a50446048fdaa64786fc0840cb9f8'
           docker compose -p flooow-ci up --build --detach
           for attempt in $(seq 1 60); do
             if curl --fail --silent http://127.0.0.1:18080/health/ready | grep -q '"status":"UP"'; then
+              docker compose -p flooow-ci exec -T api \
+                sha256sum /opt/opentelemetry-javaagent.jar \
+                | grep -q '^9d6bc2ad8dd8fb7f730984988e57b8ac0a82d81c7b3b8ae795378718733a509d '
+              ! docker compose -p flooow-ci exec -T api sh -c \
+                'command -v curl || command -v wget || command -v git'
+              curl --fail --silent \
+                --header "traceparent: 00-99999999999999999999999999999999-8888888888888888-01" \
+                http://127.0.0.1:18080/health/ready > /dev/null
+              sleep 4
+              ! curl --fail --silent \
+                http://127.0.0.1:16686/api/traces/99999999999999999999999999999999 \
+                | grep -q '"traceID"'
               curl --fail --silent \
                 --header "Authorization: Bearer ${FLOOOW_SERVICE_TOKEN}" \
                 http://127.0.0.1:18080/openapi.json | grep -q '"serviceBearer"' || continue
               created=$(curl --fail --silent \
                 --header "Authorization: Bearer ${FLOOOW_SERVICE_TOKEN}" \
+                --header "traceparent: 00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01" \
                 --header "Content-Type: application/json" \
                 --data '{"sku":"CI-MOTO-001","periodEnd":"2026-08-31","targetUnits":1000,"unitsSold":640,"availableUnits":90,"dailySalesVelocity":15,"observedOn":"2026-08-10","expectedReplenishmentOn":"2026-08-20"}' \
                 http://127.0.0.1:18080/v1/marketplace-operations/inventory-risk-assessments)
               assessment_id=$(printf '%s' "$created" | sed -n 's/.*"assessmentId":"\([^"]*\)".*/\1/p')
               test -n "$assessment_id"
+              retrieved=$(curl --fail --silent \
+                --header "Authorization: Bearer ${FLOOOW_SERVICE_TOKEN}" \
+                "http://127.0.0.1:18080/v1/marketplace-operations/inventory-risk-assessments/${assessment_id}")
+              printf '%s' "$retrieved" | grep -q "\"assessmentId\":\"${assessment_id}\"" || continue
+
+              trace_json=""
+              for trace_attempt in $(seq 1 30); do
+                trace_json=$(curl --fail --silent \
+                  http://127.0.0.1:16686/api/traces/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa || true)
+                printf '%s' "$trace_json" | grep -q 'INSERT flooow.inventory_risk_assessment_journal' && break
+                sleep 2
+              done
+              printf '%s' "$trace_json" | grep -q 'flooow-marketplace-operations-api'
+              printf '%s' "$trace_json" | grep -q 'INSERT flooow.inventory_risk_assessment_journal'
+              ! printf '%s' "$trace_json" | grep -Fq "$FLOOOW_SERVICE_TOKEN"
+              ! printf '%s' "$trace_json" | grep -Fq 'ci-runtime-only'
+              ! printf '%s' "$trace_json" | grep -Fq 'CI-MOTO-001'
+              ! printf '%s' "$trace_json" | grep -Fq "$assessment_id"
+
+              docker compose -p flooow-ci stop otel-collector
+              isolated=$(curl --fail --silent \
+                --header "Authorization: Bearer ${FLOOOW_SERVICE_TOKEN}" \
+                --header "Content-Type: application/json" \
+                --data '{"sku":"CI-ISOLATION-001","periodEnd":"2026-08-31","targetUnits":1000,"unitsSold":640,"availableUnits":90,"dailySalesVelocity":15,"observedOn":"2026-08-10","expectedReplenishmentOn":"2026-08-20"}' \
+                http://127.0.0.1:18080/v1/marketplace-operations/inventory-risk-assessments)
+              isolated_id=$(printf '%s' "$isolated" | sed -n 's/.*"assessmentId":"\([^"]*\)".*/\1/p')
               curl --fail --silent \
                 --header "Authorization: Bearer ${FLOOOW_SERVICE_TOKEN}" \
-                "http://127.0.0.1:18080/v1/marketplace-operations/inventory-risk-assessments/${assessment_id}" \
-                | grep -q "\"assessmentId\":\"${assessment_id}\"" && exit 0
+                "http://127.0.0.1:18080/v1/marketplace-operations/inventory-risk-assessments/${isolated_id}" \
+                | grep -q "\"assessmentId\":\"${isolated_id}\""
+              docker compose -p flooow-ci start otel-collector
+
+              curl --fail --silent \
+                --header "Authorization: Bearer ${FLOOOW_SERVICE_TOKEN}" \
+                --header "traceparent: 00-cccccccccccccccccccccccccccccccc-dddddddddddddddd-01" \
+                http://127.0.0.1:18080/openapi.json > /dev/null
+              for recovery_attempt in $(seq 1 30); do
+                if curl --fail --silent \
+                  http://127.0.0.1:16686/api/traces/cccccccccccccccccccccccccccccccc \
+                  | grep -q 'flooow-marketplace-operations-api'; then
+                  exit 0
+                fi
+                sleep 2
+              done
+              exit 1
             fi
             sleep 2
           done
@@ -80,4 +137,5 @@ jobs:
           POSTGRES_PASSWORD: ci-runtime-only
           FLOOOW_SERVICE_TOKEN: ci-only-service-token-000000000000000000000000000000000
           FLOOOW_ENVIRONMENT: ci
+          JAEGER_PORT: "16686"
         run: docker compose -p flooow-ci down --volumes --remove-orphans

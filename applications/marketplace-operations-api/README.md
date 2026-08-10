@@ -56,6 +56,22 @@ Health routes remain public for orchestration probes. Bearer credentials must
 use HTTPS outside isolated local development; TLS termination belongs to the
 deployment platform or reverse proxy.
 
+## Distributed tracing
+
+The Docker image includes the pinned OpenTelemetry Java agent and exports traces
+over OTLP to the Compose OpenTelemetry Collector. The Collector forwards local
+traces to Jaeger at `http://127.0.0.1:16686` by default. The API has no
+Jaeger-specific configuration.
+
+Local tracing uses `parentbased_always_on`. Shared deployments must set an
+explicit sampling policy, retain database-statement sanitization, and provide a
+Collector endpoint. Metrics and OpenTelemetry log export are disabled in this
+baseline. Collector or Jaeger unavailability does not affect API readiness or
+business requests.
+
+Authorization headers, HTTP bodies, JDBC bind values, assessment identifiers,
+SKUs, and recommendation text must never be captured as telemetry attributes.
+
 The committed `openapi.json` is the public contract. Transport DTOs remain in
 this module; the API depends on Marketplace Operations and has no direct Kernel
 dependency.

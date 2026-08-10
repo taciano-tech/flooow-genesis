@@ -1,4 +1,19 @@
 services:
+  jaeger:
+    image: jaegertracing/jaeger@sha256:46a886260e04002d8f45e213fc39063fa11a50446048fdaa64786fc0840cb9f8
+    ports:
+      - "127.0.0.1:${JAEGER_PORT:-16686}:16686"
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib@sha256:c5918f78992ee73b0d6f0e599423ac5ec52dd5d9726733114d6eca53d5a32ed5
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    depends_on:
+      - jaeger
+    restart: unless-stopped
+
   postgres:
     image: postgres:18.4
     environment:
@@ -24,12 +39,26 @@ services:
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-flooow-local-only}
       FLOOOW_SERVICE_TOKEN: ${FLOOOW_SERVICE_TOKEN:-flooow-local-only-service-token-change-before-sharing}
       FLOOOW_ENVIRONMENT: ${FLOOOW_ENVIRONMENT:-local}
+      OTEL_SERVICE_NAME: flooow-marketplace-operations-api
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=flooow,service.version=0.1.0-SNAPSHOT,deployment.environment.name=${FLOOOW_ENVIRONMENT:-local}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_SAMPLER: ${OTEL_TRACES_SAMPLER:-parentbased_always_on}
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_BSP_MAX_QUEUE_SIZE: 512
+      OTEL_BSP_MAX_EXPORT_BATCH_SIZE: 256
+      OTEL_BSP_EXPORT_TIMEOUT: 5000
+      OTEL_BSP_SCHEDULE_DELAY: 1000
+      OTEL_INSTRUMENTATION_COMMON_DB_QUERY_SANITIZATION_ENABLED: "true"
       HOST: 0.0.0.0
       PORT: 8080
     depends_on:
       postgres:
         condition: service_healthy
         restart: true
+      otel-collector:
+        condition: service_started
     ports:
       - "${FLOOOW_PORT:-8080}:8080"
     restart: unless-stopped

@@ -1,6 +1,6 @@
 # ADR-0006: MVP Distributed Tracing Boundary
 
-Status: Proposed
+Status: Accepted and implemented by TASK-0061
 
 Date: 2026-08-10
 
