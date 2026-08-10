@@ -10,11 +10,17 @@ import io.flooow.marketplace.operations.inventory.RecordedInventoryRiskAssessmen
 import io.flooow.marketplace.persistence.postgres.PostgresConfiguration
 import io.flooow.marketplace.persistence.postgres.PostgresInventoryRiskAssessmentJournal
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.auth.HttpAuthHeader
 import io.ktor.http.withCharset
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.UserIdPrincipal
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.bearer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.statuspages.StatusPages
@@ -58,12 +64,13 @@ private val json = Json {
 fun main() {
     val host = System.getenv("HOST") ?: "0.0.0.0"
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
+    val serviceToken = ServiceToken.fromEnvironment()
     val journal = PostgresInventoryRiskAssessmentJournal.connect(
         PostgresConfiguration.fromEnvironment()
     )
     val recorder = InventoryRiskAssessmentRecorder(journal)
     embeddedServer(Netty, host = host, port = port) {
-        configureApi(recorder::record, recorder::findById)
+        configureApi(serviceToken, recorder::record, recorder::findById)
     }.start(wait = true)
 }
 
@@ -78,13 +85,46 @@ fun Application.module() {
         },
         clock = Clock.fixed(Instant.parse("2026-08-10T13:00:00Z"), ZoneOffset.UTC)
     )
-    configureApi(recorder::record, recorder::findById)
+    configureApi(ServiceToken.test(TEST_SERVICE_TOKEN), recorder::record, recorder::findById)
 }
 
 internal fun Application.configureApi(
+    serviceToken: ServiceToken,
     record: (InventoryRiskInput) -> RecordedInventoryRiskAssessment,
     findById: (String) -> RecordedInventoryRiskAssessment? = { null }
 ) {
+    install(Authentication) {
+        bearer("service-bearer") {
+            realm = "flooow-marketplace-operations"
+            authHeader { call ->
+                try {
+                    val values = call.request.headers
+                        .getAll(HttpHeaders.Authorization)
+                        .orEmpty()
+                    if (values.size != 1) {
+                        null
+                    } else {
+                        val parts = values.single().split(' ', limit = 2)
+                        if (parts.size == 2 && parts.all { it.isNotEmpty() }) {
+                            HttpAuthHeader.Single(parts[0], parts[1])
+                        } else {
+                            null
+                        }
+                    }
+                } catch (_: IllegalArgumentException) {
+                    null
+                }
+            }
+            authenticate { credential ->
+                if (serviceToken.matches(credential.token)) {
+                    UserIdPrincipal("service-client")
+                } else {
+                    null
+                }
+            }
+        }
+    }
+
     install(StatusPages) {
         exception<MalformedRequestException> { call, cause ->
             call.respondProblem(
@@ -167,6 +207,16 @@ internal fun Application.configureApi(
                 code = "RESOURCE_NOT_FOUND"
             )
         }
+        status(HttpStatusCode.Unauthorized) { call, _ ->
+            call.response.header("Cache-Control", "no-store")
+            call.respondProblem(
+                status = HttpStatusCode.Unauthorized,
+                type = "https://flooow.io/problems/authentication-required",
+                title = "Authentication required",
+                detail = "A valid service bearer token is required",
+                code = "AUTHENTICATION_REQUIRED"
+            )
+        }
     }
 
     routing {
@@ -176,40 +226,42 @@ internal fun Application.configureApi(
         get("/health/ready") {
             call.respondJson(buildJsonObject { put("status", "UP") })
         }
-        get("/openapi.json") {
-            val openApi = requireNotNull(
-                Application::class.java.getResource("/openapi.json")
-            ) { "Committed OpenAPI resource is missing" }.readText()
-            call.respondText(openApi, jsonContentType, HttpStatusCode.OK)
-        }
-        post(ASSESSMENT_PATH) {
-            if (!call.request.contentType().withoutParameters()
-                    .match(ContentType.Application.Json)
-            ) {
-                throw UnsupportedMediaTypeException()
+        authenticate("service-bearer") {
+            get("/openapi.json") {
+                val openApi = requireNotNull(
+                    Application::class.java.getResource("/openapi.json")
+                ) { "Committed OpenAPI resource is missing" }.readText()
+                call.respondText(openApi, jsonContentType, HttpStatusCode.OK)
             }
+            post(ASSESSMENT_PATH) {
+                if (!call.request.contentType().withoutParameters()
+                        .match(ContentType.Application.Json)
+                ) {
+                    throw UnsupportedMediaTypeException()
+                }
 
-            val request = decodeRequest(call.receiveText())
-            val input = try {
-                request.toDomain()
-            } catch (error: IllegalArgumentException) {
-                throw DomainValidationException(
-                    error.message ?: "Inventory risk request is invalid"
+                val request = decodeRequest(call.receiveText())
+                val input = try {
+                    request.toDomain()
+                } catch (error: IllegalArgumentException) {
+                    throw DomainValidationException(
+                        error.message ?: "Inventory risk request is invalid"
+                    )
+                }
+                val recorded = record(input)
+                call.response.header(
+                    "Location",
+                    "$ASSESSMENT_PATH/${recorded.assessmentId}"
                 )
+                call.respondJson(recordedAssessmentJson(recorded), HttpStatusCode.Created)
             }
-            val recorded = record(input)
-            call.response.header(
-                "Location",
-                "$ASSESSMENT_PATH/${recorded.assessmentId}"
-            )
-            call.respondJson(recordedAssessmentJson(recorded), HttpStatusCode.Created)
-        }
-        get("$ASSESSMENT_PATH/{assessmentId}") {
-            val assessmentId = canonicalAssessmentId(
-                call.parameters["assessmentId"].orEmpty()
-            )
-            val recorded = findById(assessmentId) ?: throw AssessmentNotFoundException()
-            call.respondJson(recordedAssessmentJson(recorded))
+            get("$ASSESSMENT_PATH/{assessmentId}") {
+                val assessmentId = canonicalAssessmentId(
+                    call.parameters["assessmentId"].orEmpty()
+                )
+                val recorded = findById(assessmentId) ?: throw AssessmentNotFoundException()
+                call.respondJson(recordedAssessmentJson(recorded))
+            }
         }
     }
 }
@@ -385,3 +437,6 @@ private class DomainValidationException(message: String) : RuntimeException(mess
 private class UnsupportedMediaTypeException : RuntimeException()
 private class MalformedAssessmentIdException(message: String) : RuntimeException(message)
 private class AssessmentNotFoundException : RuntimeException()
+
+internal const val TEST_SERVICE_TOKEN =
+    "test-only-service-token-00000000000000000000000000000000"

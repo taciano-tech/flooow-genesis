@@ -8,6 +8,7 @@
     "/v1/marketplace-operations/inventory-risk-assessments": {
       "post": {
         "operationId": "assessInventoryRisk",
+        "security": [{ "serviceBearer": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -30,6 +31,7 @@
               }
             }
           },
+          "401": { "$ref": "#/components/responses/Problem" },
           "400": { "$ref": "#/components/responses/Problem" },
           "415": { "$ref": "#/components/responses/Problem" },
           "422": { "$ref": "#/components/responses/Problem" },
@@ -41,6 +43,7 @@
     "/v1/marketplace-operations/inventory-risk-assessments/{assessmentId}": {
       "get": {
         "operationId": "getInventoryRiskAssessment",
+        "security": [{ "serviceBearer": [] }],
         "parameters": [
           {
             "name": "assessmentId",
@@ -58,6 +61,7 @@
               }
             }
           },
+          "401": { "$ref": "#/components/responses/Problem" },
           "400": { "$ref": "#/components/responses/Problem" },
           "404": { "$ref": "#/components/responses/Problem" },
           "500": { "$ref": "#/components/responses/Problem" },
@@ -68,6 +72,7 @@
     "/health/live": {
       "get": {
         "operationId": "liveness",
+        "security": [],
         "responses": {
           "200": {
             "description": "Process is live",
@@ -83,6 +88,7 @@
     "/health/ready": {
       "get": {
         "operationId": "readiness",
+        "security": [],
         "responses": {
           "200": {
             "description": "Process is ready",
@@ -98,6 +104,7 @@
     "/openapi.json": {
       "get": {
         "operationId": "openApiDocument",
+        "security": [{ "serviceBearer": [] }],
         "responses": {
           "200": {
             "description": "Committed OpenAPI 3.1 contract",
@@ -106,12 +113,19 @@
                 "schema": { "type": "object" }
               }
             }
-          }
+          },
+          "401": { "$ref": "#/components/responses/Problem" }
         }
       }
     }
   },
   "components": {
+    "securitySchemes": {
+      "serviceBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
     "responses": {
       "Problem": {
         "description": "Problem detail",

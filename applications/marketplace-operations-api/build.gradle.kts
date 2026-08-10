@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":applications:marketplace-operations-persistence-postgres"))
     implementation("io.ktor:ktor-server-core-jvm:3.5.1")
     implementation("io.ktor:ktor-server-netty-jvm:3.5.1")
+    implementation("io.ktor:ktor-server-auth-jvm:3.5.1")
     implementation("io.ktor:ktor-server-status-pages-jvm:3.5.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 

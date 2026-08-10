@@ -85,7 +85,7 @@ A missing, malformed, duplicated, wrong-scheme, or invalid credential returns:
 
 ```text
 401 Unauthorized
-WWW-Authenticate: Bearer realm="flooow-marketplace-operations"
+WWW-Authenticate: Bearer realm=flooow-marketplace-operations
 Cache-Control: no-store
 Content-Type: application/problem+json; charset=UTF-8
 ```
@@ -106,6 +106,10 @@ Body:
 Missing and invalid credentials are deliberately indistinguishable. The body
 and headers contain no token, token fragment, parsing detail, expected length,
 stack trace, or comparison result.
+
+Ktor serializes this token-safe realm without optional quotation marks. The
+quoted and unquoted HTTP forms are semantically equivalent; the unquoted form
+above is the frozen response representation for this implementation.
 
 The first implementation has one privilege level. It therefore emits no 403:
 a valid token can access every protected MVP route, and every other credential
