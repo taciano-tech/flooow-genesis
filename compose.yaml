@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:18.4
+    environment:
+      POSTGRES_DB: flooow
+      POSTGRES_USER: flooow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flooow-local-only}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flooow -d flooow"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    volumes:
+      - flooow-postgres-data:/var/lib/postgresql
+
+  api:
+    build:
+      context: .
+      dockerfile: applications/marketplace-operations-api/Dockerfile
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/flooow
+      DATABASE_USER: flooow
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-flooow-local-only}
+      HOST: 0.0.0.0
+      PORT: 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    ports:
+      - "${FLOOOW_PORT:-8080}:8080"
+    restart: unless-stopped
+
+volumes:
+  flooow-postgres-data:
