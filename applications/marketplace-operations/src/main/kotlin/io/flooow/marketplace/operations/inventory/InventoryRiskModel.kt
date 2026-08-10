@@ -91,6 +91,11 @@ data class InventoryRiskAssessment(
 ) {
     val judgment: Judgment
         get() = evaluation.judgment
+
+    val selectedAlternative: InterventionAlternative
+        get() = alternatives.single {
+            it.explanation == recommendation.statement
+        }
 }
 
 internal fun certainEvidence(

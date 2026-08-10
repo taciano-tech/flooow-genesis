@@ -1,6 +1,6 @@
 # ADR-0003: MVP External API Boundary
 
-Status: Proposed
+Status: Accepted
 
 Date: 2026-08-10
 

@@ -1,6 +1,6 @@
 # SPEC-0002: MVP External API Contract
 
-Status: Proposed
+Status: Accepted
 
 Date: 2026-08-10
 
