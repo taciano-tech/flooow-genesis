@@ -1,6 +1,6 @@
 # SPEC-0006: MVP Distributed Tracing
 
-**Status:** Proposed
+**Status:** Implemented by TASK-0061
 
 **Date:** 2026-08-10
 
