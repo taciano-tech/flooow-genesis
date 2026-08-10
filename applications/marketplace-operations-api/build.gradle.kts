@@ -18,21 +18,10 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host-jvm:3.5.1")
 }
 
-val verifyApiDependencyBoundary by tasks.registering {
-    group = "verification"
-    description = "Verifies that the HTTP adapter has no direct Kernel dependency."
+val forbiddenDirectKernelDependencies = configurations
+    .flatMap { it.dependencies }
+    .filter { it.group == "io.flooow" && it.name == "kernel" }
 
-    doLast {
-        val forbidden = configurations
-            .flatMap { it.dependencies }
-            .filter { it.group == "io.flooow" && it.name == "kernel" }
-
-        check(forbidden.isEmpty()) {
-            "marketplace-operations-api must not depend directly on the Kernel"
-        }
-    }
-}
-
-tasks.check {
-    dependsOn(verifyApiDependencyBoundary)
+check(forbiddenDirectKernelDependencies.isEmpty()) {
+    "marketplace-operations-api must not depend directly on the Kernel"
 }

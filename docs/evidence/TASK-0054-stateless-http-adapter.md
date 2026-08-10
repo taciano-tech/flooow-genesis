@@ -56,14 +56,34 @@ Coverage includes:
 - health endpoints without business evaluation;
 - served OpenAPI equality with the committed resource.
 
-The Gradle `verifyApiDependencyBoundary` task runs as part of `check` and rejects
-a direct `io.flooow:kernel` dependency from the API module.
+The API build configuration rejects a direct `io.flooow:kernel` dependency
+before task execution. The check captures no Gradle script object in a task and
+is compatible with the repository configuration cache.
+
+An initial GitHub Actions run exposed that the first task-based form captured a
+Gradle script object and could not be stored in the configuration cache. The
+task itself was removed; the same invariant is now evaluated during module
+configuration. No API or domain behavior changed in this correction.
 
 ## Repository validation
 
 ```text
 ./gradlew clean build --rerun-tasks --no-daemon --no-configuration-cache
 BUILD SUCCESSFUL
+```
+
+The exact CI command was then executed twice with the repository configuration
+cache enabled. The first successful run reported:
+
+```text
+Configuration cache entry stored.
+```
+
+The second successful run reported:
+
+```text
+Reusing configuration cache.
+Configuration cache entry reused.
 ```
 
 Repository comparison against `origin/main` confirmed:
