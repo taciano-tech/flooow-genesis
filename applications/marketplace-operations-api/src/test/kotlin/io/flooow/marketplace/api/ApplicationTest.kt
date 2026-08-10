@@ -2,11 +2,14 @@ package io.flooow.marketplace.api
 
 import io.flooow.marketplace.operations.inventory.InventoryRiskEvaluator
 import io.ktor.client.request.get
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.Json
@@ -27,6 +30,7 @@ class ApplicationTest {
         application { module() }
 
         val response = client.post(assessmentPath) {
+            bearerAuth(TEST_SERVICE_TOKEN)
             contentType(ContentType.Application.Json)
             setBody(redMotoRequest)
         }
@@ -45,6 +49,7 @@ class ApplicationTest {
         application { module() }
 
         suspend fun execute() = client.post(assessmentPath) {
+            bearerAuth(TEST_SERVICE_TOKEN)
             contentType(ContentType.Application.Json)
             setBody(redMotoRequest)
         }.bodyAsText().let { Json.parseToJsonElement(it).jsonObject }
@@ -64,6 +69,7 @@ class ApplicationTest {
         val request = redMotoRequest.replace("\"availableUnits\":90", "\"availableUnits\":300")
 
         val response = client.post(assessmentPath) {
+            bearerAuth(TEST_SERVICE_TOKEN)
             contentType(ContentType.Application.Json)
             setBody(request)
         }
@@ -82,12 +88,13 @@ class ApplicationTest {
     fun `created assessment is retrievable from location`() = testApplication {
         application { module() }
         val created = client.post(assessmentPath) {
+            bearerAuth(TEST_SERVICE_TOKEN)
             contentType(ContentType.Application.Json)
             setBody(redMotoRequest)
         }
         val location = assertNotNull(created.headers["Location"])
 
-        val retrieved = client.get(location)
+        val retrieved = client.get(location) { bearerAuth(TEST_SERVICE_TOKEN) }
 
         assertEquals(HttpStatusCode.OK, retrieved.status)
         assertEquals(created.bodyAsText(), retrieved.bodyAsText())
@@ -97,10 +104,12 @@ class ApplicationTest {
     fun `malformed and missing assessment identifiers use specific problems`() = testApplication {
         application { module() }
 
-        val malformed = client.get("$assessmentPath/not-a-uuid")
+        val malformed = client.get("$assessmentPath/not-a-uuid") {
+            bearerAuth(TEST_SERVICE_TOKEN)
+        }
         val missing = client.get(
             "$assessmentPath/99999999-9999-4999-8999-999999999999"
-        )
+        ) { bearerAuth(TEST_SERVICE_TOKEN) }
 
         assertProblem(malformed.status, malformed.bodyAsText(), 400, "MALFORMED_ASSESSMENT_ID")
         assertProblem(missing.status, missing.bodyAsText(), 404, "ASSESSMENT_NOT_FOUND")
@@ -115,6 +124,7 @@ class ApplicationTest {
             redMotoRequest.replace("\"targetUnits\":1000", "\"targetUnits\":\"many\"")
         ).forEach { body ->
             val response = client.post(assessmentPath) {
+                bearerAuth(TEST_SERVICE_TOKEN)
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }
@@ -133,6 +143,7 @@ class ApplicationTest {
                     "\"$key\":$value"
                 }
             val response = client.post(assessmentPath) {
+                bearerAuth(TEST_SERVICE_TOKEN)
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }
@@ -150,6 +161,7 @@ class ApplicationTest {
 
         cases.forEach { body ->
             val response = client.post(assessmentPath) {
+                bearerAuth(TEST_SERVICE_TOKEN)
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }
@@ -168,6 +180,7 @@ class ApplicationTest {
 
         cases.forEach { body ->
             val response = client.post(assessmentPath) {
+                bearerAuth(TEST_SERVICE_TOKEN)
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }
@@ -185,6 +198,7 @@ class ApplicationTest {
         application { module() }
 
         val response = client.post(assessmentPath) {
+            bearerAuth(TEST_SERVICE_TOKEN)
             contentType(ContentType.Text.Plain)
             setBody(redMotoRequest)
         }
@@ -208,10 +222,14 @@ class ApplicationTest {
     @Test
     fun `unexpected failure returns generic 500 without disclosure`() = testApplication {
         application {
-            configureApi(record = { error("secret filesystem C:/internal/path") })
+            configureApi(
+                serviceToken = ServiceToken.test(TEST_SERVICE_TOKEN),
+                record = { error("secret filesystem C:/internal/path") }
+            )
         }
 
         val response = client.post(assessmentPath) {
+            bearerAuth(TEST_SERVICE_TOKEN)
             contentType(ContentType.Application.Json)
             setBody(redMotoRequest)
         }
@@ -224,9 +242,119 @@ class ApplicationTest {
     }
 
     @Test
+    fun `missing and invalid credentials return indistinguishable challenge`() = testApplication {
+        application { module() }
+
+        val missing = client.post(assessmentPath)
+        val invalid = listOf(
+            client.post(assessmentPath) { bearerAuth("invalid-token") },
+            client.post(assessmentPath) {
+                header(HttpHeaders.Authorization, "Basic abc123")
+            },
+            client.post(assessmentPath) {
+                bearerAuth(TEST_SERVICE_TOKEN.replaceFirst('t', 'T'))
+            },
+            client.post(assessmentPath) {
+                header(HttpHeaders.Authorization, "Bearer ${TEST_SERVICE_TOKEN.dropLast(1)}")
+            },
+            client.post(assessmentPath) {
+                headers.append(HttpHeaders.Authorization, "Bearer invalid-one")
+                headers.append(HttpHeaders.Authorization, "Bearer invalid-two")
+            }
+        )
+
+        listOf(missing, *invalid.toTypedArray()).forEachIndexed { index, response ->
+            assertEquals(HttpStatusCode.Unauthorized, response.status, "credential case $index")
+            assertProblem(response.status, response.bodyAsText(), 401, "AUTHENTICATION_REQUIRED")
+            assertEquals(
+                "Bearer realm=flooow-marketplace-operations",
+                response.headers["WWW-Authenticate"]
+            )
+            assertEquals("no-store", response.headers["Cache-Control"])
+        }
+        invalid.forEach { assertEquals(missing.bodyAsText(), it.bodyAsText()) }
+        assertFalse(missing.bodyAsText().contains(TEST_SERVICE_TOKEN))
+    }
+
+    @Test
+    fun `authentication runs before request parsing and business evaluation`() = testApplication {
+        var evaluations = 0
+        application {
+            configureApi(
+                serviceToken = ServiceToken.test(TEST_SERVICE_TOKEN),
+                record = {
+                    evaluations += 1
+                    error("must not evaluate")
+                }
+            )
+        }
+
+        val response = client.post(assessmentPath) {
+            contentType(ContentType.Application.Json)
+            setBody("not-json")
+        }
+
+        assertProblem(response.status, response.bodyAsText(), 401, "AUTHENTICATION_REQUIRED")
+        assertEquals(0, evaluations)
+    }
+
+    @Test
+    fun `authentication runs before persistence lookup`() = testApplication {
+        var lookups = 0
+        application {
+            configureApi(
+                serviceToken = ServiceToken.test(TEST_SERVICE_TOKEN),
+                record = { error("must not record") },
+                findById = {
+                    lookups += 1
+                    error("must not query")
+                }
+            )
+        }
+
+        val response = client.get(
+            "$assessmentPath/99999999-9999-4999-8999-999999999999"
+        )
+
+        assertProblem(response.status, response.bodyAsText(), 401, "AUTHENTICATION_REQUIRED")
+        assertEquals(0, lookups)
+    }
+
+    @Test
+    fun `service token configuration fails safely`() {
+        val valid = "A".repeat(43)
+        ServiceToken.fromEnvironment(mapOf("FLOOOW_SERVICE_TOKEN" to valid))
+
+        listOf(
+            emptyMap(),
+            mapOf("FLOOOW_SERVICE_TOKEN" to "short"),
+            mapOf("FLOOOW_SERVICE_TOKEN" to " $valid"),
+            mapOf("FLOOOW_SERVICE_TOKEN" to "${valid.dropLast(1)}\n"),
+            mapOf("FLOOOW_SERVICE_TOKEN" to LOCAL_SERVICE_TOKEN)
+        ).forEach { environment ->
+            val error = kotlin.runCatching {
+                ServiceToken.fromEnvironment(environment)
+            }.exceptionOrNull()
+            assertNotNull(error)
+            assertFalse(error.message.orEmpty().contains(valid))
+            assertFalse(error.message.orEmpty().contains(LOCAL_SERVICE_TOKEN))
+        }
+
+        ServiceToken.fromEnvironment(
+            mapOf(
+                "FLOOOW_SERVICE_TOKEN" to LOCAL_SERVICE_TOKEN,
+                "FLOOOW_ENVIRONMENT" to "local"
+            )
+        )
+    }
+
+    @Test
     fun `health endpoints are available without business evaluation`() = testApplication {
         application {
-            configureApi(record = { error("business evaluation must not run") })
+            configureApi(
+                serviceToken = ServiceToken.test(TEST_SERVICE_TOKEN),
+                record = { error("business evaluation must not run") }
+            )
         }
 
         listOf("/health/live", "/health/ready").forEach { path ->
@@ -240,11 +368,14 @@ class ApplicationTest {
     fun `served OpenAPI equals committed resource`() = testApplication {
         application { module() }
 
-        val response = client.get("/openapi.json")
+        val response = client.get("/openapi.json") {
+            bearerAuth(TEST_SERVICE_TOKEN)
+        }
 
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals(resource("/openapi.json"), response.bodyAsText())
         assertTrue(response.bodyAsText().contains("\"openapi\": \"3.1.0\""))
+        assertTrue(response.bodyAsText().contains("\"serviceBearer\""))
     }
 
     private fun assertProblem(

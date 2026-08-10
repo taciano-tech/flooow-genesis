@@ -46,12 +46,27 @@ jobs:
         env:
           FLOOOW_PORT: "18080"
           POSTGRES_PASSWORD: ci-runtime-only
+          FLOOOW_SERVICE_TOKEN: ci-only-service-token-000000000000000000000000000000000
+          FLOOOW_ENVIRONMENT: ci
         run: |
           docker compose config --quiet
           docker compose -p flooow-ci up --build --detach
           for attempt in $(seq 1 60); do
             if curl --fail --silent http://127.0.0.1:18080/health/ready | grep -q '"status":"UP"'; then
-              exit 0
+              curl --fail --silent \
+                --header "Authorization: Bearer ${FLOOOW_SERVICE_TOKEN}" \
+                http://127.0.0.1:18080/openapi.json | grep -q '"serviceBearer"' || continue
+              created=$(curl --fail --silent \
+                --header "Authorization: Bearer ${FLOOOW_SERVICE_TOKEN}" \
+                --header "Content-Type: application/json" \
+                --data '{"sku":"CI-MOTO-001","periodEnd":"2026-08-31","targetUnits":1000,"unitsSold":640,"availableUnits":90,"dailySalesVelocity":15,"observedOn":"2026-08-10","expectedReplenishmentOn":"2026-08-20"}' \
+                http://127.0.0.1:18080/v1/marketplace-operations/inventory-risk-assessments)
+              assessment_id=$(printf '%s' "$created" | sed -n 's/.*"assessmentId":"\([^"]*\)".*/\1/p')
+              test -n "$assessment_id"
+              curl --fail --silent \
+                --header "Authorization: Bearer ${FLOOOW_SERVICE_TOKEN}" \
+                "http://127.0.0.1:18080/v1/marketplace-operations/inventory-risk-assessments/${assessment_id}" \
+                | grep -q "\"assessmentId\":\"${assessment_id}\"" && exit 0
             fi
             sleep 2
           done
@@ -63,4 +78,6 @@ jobs:
         env:
           FLOOOW_PORT: "18080"
           POSTGRES_PASSWORD: ci-runtime-only
+          FLOOOW_SERVICE_TOKEN: ci-only-service-token-000000000000000000000000000000000
+          FLOOOW_ENVIRONMENT: ci
         run: docker compose -p flooow-ci down --volumes --remove-orphans
