@@ -41,3 +41,26 @@ jobs:
 
       - name: Validate repository
         run: ./gradlew clean build --no-daemon --stacktrace
+
+      - name: Validate persistent runtime package
+        env:
+          FLOOOW_PORT: "18080"
+          POSTGRES_PASSWORD: ci-runtime-only
+        run: |
+          docker compose config --quiet
+          docker compose -p flooow-ci up --build --detach
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:18080/health/ready | grep -q '"status":"UP"'; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose -p flooow-ci logs
+          exit 1
+
+      - name: Clean persistent runtime package
+        if: always()
+        env:
+          FLOOOW_PORT: "18080"
+          POSTGRES_PASSWORD: ci-runtime-only
+        run: docker compose -p flooow-ci down --volumes --remove-orphans

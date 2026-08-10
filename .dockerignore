@@ -1,0 +1,11 @@
+.git
+.github
+.gradle
+.gradle-user-home
+.kotlin
+**/.gradle
+**/.kotlin
+**/build
+**/*.log
+.idea
+.vscode
