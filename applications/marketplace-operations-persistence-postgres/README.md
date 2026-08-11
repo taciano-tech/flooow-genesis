@@ -17,5 +17,11 @@ retry, delete, or mark them as delivered; `published_at` remains `NULL`. A futur
 dispatcher must define retention, concurrency, retry, dead-letter, observability,
 and shutdown behavior before delivery is enabled.
 
+The module also contains the transport-neutral delivery coordination library.
+It provides idempotent enqueue, deterministic concurrent claims, bounded leases,
+fenced settlement, retry, and dead-letter state per logical destination. Tests
+exercise it with fake sinks; the API does not start a dispatcher, register a
+destination, or perform network delivery.
+
 Integration tests use Testcontainers with the pinned `postgres:18.4` image and
 require an available Docker-compatible container runtime.
