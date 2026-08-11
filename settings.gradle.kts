@@ -8,6 +8,7 @@ include(":platform:foundation:kernel")
 include(":applications:marketplace-operations")
 include(":applications:marketplace-operations-api")
 include(":applications:marketplace-operations-persistence-postgres")
+include(":applications:integration-control-plane")
 include(":research:experiments:exp-0003-harness")
 
 project(":platform:foundation:kernel").projectDir =
@@ -21,6 +22,9 @@ project(":applications:marketplace-operations-api").projectDir =
 
 project(":applications:marketplace-operations-persistence-postgres").projectDir =
     file("applications/marketplace-operations-persistence-postgres")
+
+project(":applications:integration-control-plane").projectDir =
+    file("applications/integration-control-plane")
 
 project(":research:experiments:exp-0003-harness").projectDir =
     file("research/experiments/exp-0003-harness")
