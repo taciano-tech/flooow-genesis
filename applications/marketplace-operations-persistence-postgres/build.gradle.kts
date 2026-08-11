@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":applications:marketplace-operations"))
+    implementation(project(":applications:integration-control-plane"))
     implementation("org.jetbrains.exposed:exposed-core:1.4.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:1.4.0")
     implementation("org.jetbrains.exposed:exposed-java-time:1.4.0")
