@@ -1,6 +1,7 @@
 package io.flooow.marketplace.persistence.postgres
 
 import io.flooow.integration.control.*
+import io.flooow.integration.inventory.acceptance.*
 import io.flooow.integration.inventory.mapping.*
 import io.flooow.integration.inventory.observation.*
 import io.flooow.integration.inventory.source.SourceItemReference
@@ -100,10 +101,16 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
         )
         val observations = observationService()
         val pointer = pointer(scope.second)
-        assertIs<CanonicalInventoryProjectionResult.Projected>(
+        val firstProjection = assertIs<CanonicalInventoryProjectionResult.Projected>(
             observations.project(scope.first, pointer)
         )
         val initial = mapping.history(scope.first, selector).single()
+        val initialAcceptance = assertIs<CanonicalInventoryAcceptanceResult.Accepted>(
+            acceptanceService().acceptInitial(
+                scope.first, initial.id, firstProjection.observationId,
+                InventoryAcceptancePrincipalReference.of("test-principal")
+            )
+        )
         assertEquals(
             MappingWriteResult.APPLIED,
             mapping.replace(
@@ -114,9 +121,18 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
                 InventoryMappingReason.IDENTITY_CORRECTION
             )
         )
-        assertIs<CanonicalInventoryProjectionResult.Projected>(
+        val secondProjection = assertIs<CanonicalInventoryProjectionResult.Projected>(
             observations.project(scope.first, pointer)
         )
+        val reinterpreted = assertIs<CanonicalInventoryAcceptanceResult.Accepted>(
+            acceptanceService().replace(
+                scope.first, initial.id, initialAcceptance.acceptanceId,
+                initialAcceptance.revision, secondProjection.observationId,
+                InventoryAcceptancePrincipalReference.of("test-principal"),
+                CanonicalInventoryAcceptanceReason.MAPPING_REINTERPRETATION
+            )
+        )
+        assertEquals(2, reinterpreted.revision)
         val history = observations.history(scope.first, pointer)
         assertEquals(listOf(1, 2), history.map { it.projectionRevision })
         assertEquals(listOf(1, 2), history.map { it.mappingRevision })
@@ -193,6 +209,141 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
         }
     }
 
+    @Test
+    fun `acceptance advances exact lineage withdraws head and preserves immutable history`() {
+        val scope = activeConnection()
+        seedLedger(scope, "accepted-item", "EA", "4", null, null, null)
+        val mappings = mappingService()
+        val item = mappings.createItem(scope.first).second
+        val unit = mappings.createUnit(scope.first).second
+        val selector = selector(scope.second, "accepted-item", "EA")
+        assertEquals(
+            MappingWriteResult.APPLIED,
+            mappings.activateInitial(
+                scope.first, selector,
+                InventoryMappingTarget(item, null, unit, QuantityFactor.of(1, 1)),
+                InventoryMappingEvidence(scope.second, inputProgressVersion = 0, recordOrdinal = 0),
+                InventoryMappingPrincipalReference.of("test-principal")
+            )
+        )
+        val root = mappings.history(scope.first, selector).single()
+        val observations = observationService()
+        val first = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observations.project(scope.first, pointer(scope.second, 0))
+        )
+        val acceptances = acceptanceService()
+        val accepted = assertIs<CanonicalInventoryAcceptanceResult.Accepted>(
+            acceptances.acceptInitial(
+                scope.first, root.id, first.observationId,
+                InventoryAcceptancePrincipalReference.of("test-principal")
+            )
+        )
+        assertEquals(1, accepted.revision)
+        assertIs<CanonicalInventoryAcceptanceResult.AlreadyAccepted>(
+            acceptances.acceptInitial(
+                scope.first, root.id, first.observationId,
+                InventoryAcceptancePrincipalReference.of("test-principal")
+            )
+        )
+
+        seedLaterEvidence(scope, "accepted-item", "EA", "7")
+        val second = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observations.project(scope.first, pointer(scope.second, 1))
+        )
+        val replaced = assertIs<CanonicalInventoryAcceptanceResult.Accepted>(
+            acceptances.replace(
+                scope.first, root.id, accepted.acceptanceId, accepted.revision,
+                second.observationId, InventoryAcceptancePrincipalReference.of("test-principal"),
+                CanonicalInventoryAcceptanceReason.NEW_SOURCE_EVIDENCE
+            )
+        )
+        assertEquals(2, replaced.revision)
+        assertIs<CanonicalInventoryAcceptanceResult.Stale>(
+            acceptances.replace(
+                scope.first, root.id, replaced.acceptanceId, replaced.revision,
+                first.observationId, InventoryAcceptancePrincipalReference.of("test-principal"),
+                CanonicalInventoryAcceptanceReason.NEW_SOURCE_EVIDENCE
+            )
+        )
+        assertEquals(1, acceptances.head(scope.first, root.id)
+            ?.acceptedObservation?.sourcePointer?.inputProgressVersion)
+        assertEquals(listOf(1, 2), acceptances.history(scope.first, root.id).map { it.revision })
+        assertEquals(
+            listOf(CanonicalInventoryAcceptanceState.RETIRED,
+                CanonicalInventoryAcceptanceState.ACTIVE),
+            acceptances.history(scope.first, root.id).map { it.state }
+        )
+
+        assertIs<CanonicalInventoryAcceptanceResult.Withdrawn>(
+            acceptances.withdraw(
+                scope.first, root.id, replaced.acceptanceId, replaced.revision,
+                InventoryAcceptancePrincipalReference.of("test-principal"),
+                CanonicalInventoryAcceptanceReason.OPERATOR_WITHDRAWAL
+            )
+        )
+        assertNull(acceptances.head(scope.first, root.id))
+        assertEquals(2, acceptances.history(scope.first, root.id).size)
+        assertEquals(2, count("integration_inventory_source_acceptance_retirement"))
+        assertFailsWith<SQLException> {
+            execute("DELETE FROM integration_inventory_source_acceptance")
+        }
+    }
+
+    @Test
+    fun `competing acceptance replacements create one successor`() {
+        val scope = activeConnection()
+        seedLedger(scope, "acceptance-race", null, "3", null, null, null)
+        val mappings = mappingService()
+        val item = mappings.createItem(scope.first).second
+        val unit = mappings.createUnit(scope.first).second
+        val selector = selector(scope.second, "acceptance-race", null)
+        mappings.activateInitial(
+            scope.first, selector,
+            InventoryMappingTarget(item, null, unit, QuantityFactor.of(1, 1)),
+            InventoryMappingEvidence(scope.second, inputProgressVersion = 0, recordOrdinal = 0),
+            InventoryMappingPrincipalReference.of("test-principal")
+        )
+        val root = mappings.history(scope.first, selector).single()
+        val observations = observationService()
+        val first = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observations.project(scope.first, pointer(scope.second, 0))
+        )
+        val initial = assertIs<CanonicalInventoryAcceptanceResult.Accepted>(
+            acceptanceService().acceptInitial(
+                scope.first, root.id, first.observationId,
+                InventoryAcceptancePrincipalReference.of("test-principal")
+            )
+        )
+        seedLaterEvidence(scope, "acceptance-race", null, "8")
+        val second = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observations.project(scope.first, pointer(scope.second, 1))
+        )
+        val executor = Executors.newFixedThreadPool(2)
+        try {
+            val results = executor.invokeAll(listOf(
+                Callable {
+                    acceptanceService().replace(
+                        scope.first, root.id, initial.acceptanceId, initial.revision,
+                        second.observationId,
+                        InventoryAcceptancePrincipalReference.of("test-principal"),
+                        CanonicalInventoryAcceptanceReason.NEW_SOURCE_EVIDENCE
+                    )
+                },
+                Callable {
+                    acceptanceService().replace(
+                        scope.first, root.id, initial.acceptanceId, initial.revision,
+                        second.observationId,
+                        InventoryAcceptancePrincipalReference.of("test-principal"),
+                        CanonicalInventoryAcceptanceReason.NEW_SOURCE_EVIDENCE
+                    )
+                }
+            )).map { it.get() }
+            assertEquals(1, results.count { it is CanonicalInventoryAcceptanceResult.Accepted })
+            assertEquals(1, results.count { it is CanonicalInventoryAcceptanceResult.Conflict })
+            assertEquals(2, acceptanceService().history(scope.first, root.id).size)
+        } finally { executor.shutdownNow() }
+    }
+
     private fun activeConnection(): Pair<OrganizationId, IntegrationConnectionId> {
         val organization = control.createOrganization()
         val connection = control.createConnection(
@@ -216,6 +367,12 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
         PostgresCanonicalInventoryObservationRepository(configuration),
         ObservationIdentifierFactory { CanonicalInventoryObservationId.of(uuid()) },
         ObservationIdentifierFactory { CanonicalInventoryObservationCorrelationId.of(uuid()) }
+    )
+
+    private fun acceptanceService() = CanonicalInventoryAcceptanceService(
+        PostgresCanonicalInventoryAcceptanceRepository(configuration),
+        AcceptanceIdentifierFactory { CanonicalInventoryAcceptanceId.of(uuid()) },
+        AcceptanceIdentifierFactory { CanonicalInventoryAcceptanceCorrelationId.of(uuid()) }
     )
 
     private fun selector(connectionId: IntegrationConnectionId, item: String, unit: String?) =
