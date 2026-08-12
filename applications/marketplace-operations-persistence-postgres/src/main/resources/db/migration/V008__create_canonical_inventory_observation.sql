@@ -178,6 +178,7 @@ BEGIN
               AND connection_id=NEW.connection_id AND capability=NEW.capability
               AND input_progress_version=NEW.input_progress_version
               AND record_ordinal=NEW.record_ordinal
+              AND observation_id <> NEW.observation_id
         ) THEN RAISE EXCEPTION 'canonical inventory initial revision unavailable'; END IF;
     ELSE
         SELECT * INTO predecessor FROM integration_inventory_canonical_observation

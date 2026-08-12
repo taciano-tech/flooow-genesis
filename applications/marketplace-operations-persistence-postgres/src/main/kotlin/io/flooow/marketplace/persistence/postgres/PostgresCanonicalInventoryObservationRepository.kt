@@ -66,6 +66,11 @@ class PostgresCanonicalInventoryObservationRepository(
             CanonicalInventoryProjectionResult.Projected(
                 observation.id, observation.projectionRevision
             )
+        }.also { outcome ->
+            if (outcome is CanonicalInventoryProjectionResult.Projected &&
+                find(organizationId, outcome.observationId) == null) {
+                return CanonicalInventoryProjectionResult.IntegrityFailure
+            }
         }
     } catch (_: SQLException) {
         CanonicalInventoryProjectionResult.IntegrityFailure
