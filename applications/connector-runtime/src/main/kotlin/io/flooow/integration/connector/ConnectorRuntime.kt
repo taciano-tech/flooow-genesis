@@ -69,7 +69,7 @@ class ConnectorRuntime(
         }
 
         gate(invocation, cancellation, provider)?.let {
-            versionedProgress.progress?.clear()
+            versionedProgress.progress?.close()
             return it
         }
         if (versionedProgress.exhausted) {
@@ -113,7 +113,7 @@ class ConnectorRuntime(
                 )
             }
         } finally {
-            versionedProgress.progress?.clear()
+            versionedProgress.progress?.close()
         }
     }
 
@@ -229,7 +229,7 @@ class ConnectorRuntime(
                 )
             }
         } finally {
-            page.nextProgress?.clear()
+            page.nextProgress?.close()
         }
     }
 

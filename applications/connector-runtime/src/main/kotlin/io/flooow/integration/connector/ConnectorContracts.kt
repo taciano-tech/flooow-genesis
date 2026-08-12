@@ -70,7 +70,7 @@ fun interface ConnectorCancellation {
 
 interface ConnectorRecord
 
-class ConnectorProgress private constructor(private val bytes: ByteArray) {
+class ConnectorProgress private constructor(private val bytes: ByteArray) : AutoCloseable {
     fun <T> useBytes(operation: (ByteArray) -> T): T {
         val scoped = bytes.copyOf()
         return try {
@@ -83,7 +83,7 @@ class ConnectorProgress private constructor(private val bytes: ByteArray) {
     internal fun sameValueAs(other: ConnectorProgress): Boolean =
         useBytes { left -> other.useBytes { right -> left.contentEquals(right) } }
 
-    internal fun clear() = bytes.fill(0)
+    override fun close() = bytes.fill(0)
 
     internal fun isCleared(): Boolean = bytes.all { it == 0.toByte() }
 
@@ -120,6 +120,11 @@ class VersionedConnectorProgress(
 }
 
 class ConnectorPageCommitKey private constructor(private val digest: ByteArray) {
+    fun <T> useBytes(operation: (ByteArray) -> T): T {
+        val scoped = digest.copyOf()
+        return try { operation(scoped) } finally { scoped.fill(0) }
+    }
+
     override fun equals(other: Any?): Boolean =
         other is ConnectorPageCommitKey && digest.contentEquals(other.digest)
 
@@ -146,6 +151,50 @@ class ConnectorPageCommitKey private constructor(private val digest: ByteArray) 
             )
         }
     }
+}
+
+data class ConnectorProgressProtectionContext(
+    val organizationId: OrganizationId,
+    val connectionId: IntegrationConnectionId,
+    val capability: ConnectorCapability,
+    val progressVersion: Long
+) {
+    init {
+        require(progressVersion >= 0) { "Invalid protected progress version" }
+    }
+}
+
+class SealedConnectorProgress private constructor(private val envelope: ByteArray) : AutoCloseable {
+    fun <T> useBytes(operation: (ByteArray) -> T): T {
+        val scoped = envelope.copyOf()
+        return try { operation(scoped) } finally { scoped.fill(0) }
+    }
+
+    override fun toString(): String = "[REDACTED]"
+    override fun close() = envelope.fill(0)
+
+    companion object {
+        const val MAX_BYTES = 16_384
+
+        fun take(ownedBytes: ByteArray): SealedConnectorProgress = try {
+            require(ownedBytes.size in 1..MAX_BYTES) { "Invalid sealed connector progress" }
+            SealedConnectorProgress(ownedBytes.copyOf())
+        } finally {
+            ownedBytes.fill(0)
+        }
+    }
+}
+
+interface ConnectorProgressProtector {
+    fun seal(
+        context: ConnectorProgressProtectionContext,
+        plaintextBytes: ByteArray
+    ): SealedConnectorProgress
+
+    fun open(
+        context: ConnectorProgressProtectionContext,
+        sealedProgress: SealedConnectorProgress
+    ): ByteArray
 }
 
 data class ConnectorRecordDefinition(
