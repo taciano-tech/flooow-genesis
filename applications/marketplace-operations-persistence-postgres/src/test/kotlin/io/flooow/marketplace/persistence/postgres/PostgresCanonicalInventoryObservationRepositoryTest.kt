@@ -127,6 +127,42 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
     }
 
     @Test
+    fun `accepted mapping projects later evidence with the same exact selector`() {
+        val scope = activeConnection()
+        seedLedger(scope, "timeline-item", "EA", "4", null, null, null)
+        val mapping = mappingService()
+        val item = mapping.createItem(scope.first).second
+        val unit = mapping.createUnit(scope.first).second
+        val selector = selector(scope.second, "timeline-item", "EA")
+        assertEquals(
+            MappingWriteResult.APPLIED,
+            mapping.activateInitial(
+                scope.first, selector,
+                InventoryMappingTarget(item, null, unit, QuantityFactor.of(1, 1)),
+                InventoryMappingEvidence(scope.second, inputProgressVersion = 0, recordOrdinal = 0),
+                InventoryMappingPrincipalReference.of("test-principal")
+            )
+        )
+        val observations = observationService()
+        assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observations.project(scope.first, pointer(scope.second, 0))
+        )
+
+        seedLaterEvidence(scope, "timeline-item", "EA", "7")
+
+        assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observations.project(scope.first, pointer(scope.second, 1))
+        )
+        assertEquals(
+            BigInteger.valueOf(7),
+            observations.history(scope.first, pointer(scope.second, 1)).single()
+                .measures.availableToSell?.numeratorForPersistence()
+        )
+        assertEquals(2, count("integration_inventory_canonical_observation"))
+        assertEquals(1, count("integration_inventory_source_mapping"))
+    }
+
+    @Test
     fun `concurrent projection creates one observation and direct mutations are rejected`() {
         val scope = activeConnection()
         seedLedger(scope, "race-item", null, "9", null, null, null)
@@ -188,8 +224,10 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
             sourceUnitCode = unit?.let(SourceUnitCode::of)
         )
 
-    private fun pointer(connectionId: IntegrationConnectionId) =
-        CanonicalInventorySourcePointer(connectionId, inputProgressVersion = 0, recordOrdinal = 0)
+    private fun pointer(connectionId: IntegrationConnectionId, version: Long = 0) =
+        CanonicalInventorySourcePointer(
+            connectionId, inputProgressVersion = version, recordOrdinal = 0
+        )
 
     private fun seedLedger(
         scope: Pair<OrganizationId, IntegrationConnectionId>,
@@ -228,6 +266,50 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
             statement.setString(5, unit); statement.setBigDecimal(6, available?.toBigDecimal())
             statement.setBigDecimal(7, onHand?.toBigDecimal()); statement.setBigDecimal(8, reserved?.toBigDecimal())
             statement.setBigDecimal(9, pendingInbound?.toBigDecimal()); statement.executeUpdate()
+        }
+        connection.commit()
+    }
+
+    private fun seedLaterEvidence(
+        scope: Pair<OrganizationId, IntegrationConnectionId>,
+        item: String,
+        unit: String?,
+        available: String
+    ) = connection().use { connection ->
+        connection.autoCommit = false
+        connection.prepareStatement(
+            "UPDATE integration_connector_progress SET progress_version=2,updated_at=? " +
+                "WHERE organization_id=? AND connection_id=? AND capability=?"
+        ).use { statement ->
+            statement.setTimestamp(1, Timestamp.from(now.plusSeconds(60)))
+            statement.setObject(2, scope.first.value)
+            statement.setObject(3, scope.second.value)
+            statement.setString(4, "inventory.source-balance.read")
+            statement.executeUpdate()
+        }
+        connection.prepareStatement(
+            "INSERT INTO integration_connector_page_commit VALUES (?,?,?,1,?,1,true,?,?)"
+        ).use { statement ->
+            statement.setObject(1, scope.first.value)
+            statement.setObject(2, scope.second.value)
+            statement.setString(3, "inventory.source-balance.read")
+            statement.setBytes(4, ByteArray(32) { 9 })
+            statement.setTimestamp(5, Timestamp.from(now.plusSeconds(60)))
+            statement.setTimestamp(6, Timestamp.from(now.plusSeconds(60)))
+            statement.executeUpdate()
+        }
+        connection.prepareStatement(
+            "INSERT INTO integration_inventory_source_balance " +
+                "(organization_id,connection_id,capability,input_progress_version,record_ordinal," +
+                "source_item_ref,source_unit_code,available_to_sell) VALUES (?,?,?,1,0,?,?,?)"
+        ).use { statement ->
+            statement.setObject(1, scope.first.value)
+            statement.setObject(2, scope.second.value)
+            statement.setString(3, "inventory.source-balance.read")
+            statement.setString(4, item)
+            statement.setString(5, unit)
+            statement.setBigDecimal(6, available.toBigDecimal())
+            statement.executeUpdate()
         }
         connection.commit()
     }
