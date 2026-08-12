@@ -13,6 +13,7 @@ include(":applications:integration-control-plane")
 include(":applications:connector-runtime")
 include(":applications:inventory-source-ingestion")
 include(":applications:inventory-identity-mapping")
+include(":applications:inventory-canonical-observation")
 include(":research:experiments:exp-0003-harness")
 
 project(":platform:foundation:kernel").projectDir =
@@ -41,6 +42,9 @@ project(":applications:inventory-source-ingestion").projectDir =
 
 project(":applications:inventory-identity-mapping").projectDir =
     file("applications/inventory-identity-mapping")
+
+project(":applications:inventory-canonical-observation").projectDir =
+    file("applications/inventory-canonical-observation")
 
 project(":research:experiments:exp-0003-harness").projectDir =
     file("research/experiments/exp-0003-harness")
