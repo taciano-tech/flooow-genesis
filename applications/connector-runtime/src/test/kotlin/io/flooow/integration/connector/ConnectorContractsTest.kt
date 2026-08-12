@@ -47,7 +47,7 @@ class ConnectorContractsTest {
 
         assertEquals("opaque-scroll-marker".length, size)
         assertTrue(scoped.all { it == 0.toByte() })
-        progress.clear()
+        progress.close()
         assertTrue(progress.isCleared())
     }
 
@@ -72,6 +72,22 @@ class ConnectorContractsTest {
                 lastObservedAt = Instant.EPOCH
             ).exhausted
         )
+    }
+
+    @Test
+    fun `sealed progress owns redacts scopes and clears its envelope`() {
+        val owned = "sealed-envelope-marker".toByteArray()
+        val sealed = SealedConnectorProgress.take(owned)
+        assertTrue(owned.all { it == 0.toByte() })
+        assertEquals("[REDACTED]", sealed.toString())
+        lateinit var scoped: ByteArray
+        sealed.useBytes { scoped = it }
+        assertTrue(scoped.all { it == 0.toByte() })
+        sealed.close()
+        sealed.useBytes { assertTrue(it.all { byte -> byte == 0.toByte() }) }
+        assertFailsWith<IllegalArgumentException> {
+            SealedConnectorProgress.take(ByteArray(SealedConnectorProgress.MAX_BYTES + 1))
+        }
     }
 
     @Test

@@ -11,6 +11,7 @@ include(":applications:marketplace-operations-api")
 include(":applications:marketplace-operations-persistence-postgres")
 include(":applications:integration-control-plane")
 include(":applications:connector-runtime")
+include(":applications:inventory-source-ingestion")
 include(":research:experiments:exp-0003-harness")
 
 project(":platform:foundation:kernel").projectDir =
@@ -33,6 +34,9 @@ project(":applications:integration-control-plane").projectDir =
 
 project(":applications:connector-runtime").projectDir =
     file("applications/connector-runtime")
+
+project(":applications:inventory-source-ingestion").projectDir =
+    file("applications/inventory-source-ingestion")
 
 project(":research:experiments:exp-0003-harness").projectDir =
     file("research/experiments/exp-0003-harness")
