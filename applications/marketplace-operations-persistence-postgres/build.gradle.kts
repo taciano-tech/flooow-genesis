@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":applications:inventory-source-ingestion"))
     implementation(project(":applications:inventory-identity-mapping"))
     implementation(project(":applications:inventory-canonical-observation"))
+    implementation(project(":applications:inventory-source-acceptance"))
     implementation("org.jetbrains.exposed:exposed-core:1.4.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:1.4.0")
     implementation("org.jetbrains.exposed:exposed-java-time:1.4.0")
