@@ -7,7 +7,8 @@ import java.text.Normalizer
 import java.time.Instant
 
 object InventorySourceBalanceCapability {
-    val KEY: ConnectorCapability = ConnectorCapability.of("inventory.source-balance.read")
+    const val VALUE = "inventory.source-balance.read"
+    val KEY: ConnectorCapability = ConnectorCapability.of(VALUE)
 }
 
 sealed class SourceText protected constructor(
