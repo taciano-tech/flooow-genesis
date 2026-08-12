@@ -19,7 +19,9 @@ Copy `.env.example` to `.env` to customize the local database password or host
 port. The committed defaults are intended only for isolated local development.
 The committed service token is public and provides no protection. Replace
 `FLOOOW_SERVICE_TOKEN` and set `FLOOOW_ENVIRONMENT` to a non-`local` value in
-every shared environment.
+every shared environment. Bind that credential to exactly one company with the
+canonical UUID in `FLOOOW_SERVICE_ORGANIZATION_ID`; callers cannot override it
+through request input.
 
 On Windows, an installed distribution can be started without the generated
 batch classpath limit:
@@ -35,6 +37,7 @@ JDBC URL plus `DATABASE_USER` and `DATABASE_PASSWORD`. Flyway migrations finish
 before the server accepts traffic. Startup also requires a service token of at
 least 43 characters in `FLOOOW_SERVICE_TOKEN`; the local placeholder is rejected
 unless `FLOOOW_ENVIRONMENT=local`.
+`FLOOOW_SERVICE_ORGANIZATION_ID` is also required and must be a canonical UUID.
 
 ## Routes
 

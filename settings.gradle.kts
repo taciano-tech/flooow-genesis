@@ -5,6 +5,7 @@ pluginManagement {
 }
 
 include(":platform:foundation:kernel")
+include(":platform:foundation:organization-context")
 include(":applications:marketplace-operations")
 include(":applications:marketplace-operations-api")
 include(":applications:marketplace-operations-persistence-postgres")
@@ -13,6 +14,9 @@ include(":research:experiments:exp-0003-harness")
 
 project(":platform:foundation:kernel").projectDir =
     file("platform/foundation/kernel")
+
+project(":platform:foundation:organization-context").projectDir =
+    file("platform/foundation/organization-context")
 
 project(":applications:marketplace-operations").projectDir =
     file("applications/marketplace-operations")

@@ -1,11 +1,11 @@
 package io.flooow.integration.control
 
+import io.flooow.organization.OrganizationId
 import java.time.Clock
 import java.time.Instant
 import java.util.UUID
 
-@JvmInline
-value class IntegrationOrganizationId(val value: UUID)
+typealias IntegrationOrganizationId = OrganizationId
 
 @JvmInline
 value class IntegrationConnectionId(val value: UUID)

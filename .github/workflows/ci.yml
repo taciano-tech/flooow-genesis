@@ -47,6 +47,7 @@ jobs:
           FLOOOW_PORT: "18080"
           POSTGRES_PASSWORD: ci-runtime-only
           FLOOOW_SERVICE_TOKEN: ci-only-service-token-000000000000000000000000000000000
+          FLOOOW_SERVICE_ORGANIZATION_ID: 11111111-1111-4111-8111-111111111111
           FLOOOW_ENVIRONMENT: ci
           JAEGER_PORT: "16686"
         run: |
@@ -136,6 +137,7 @@ jobs:
           FLOOOW_PORT: "18080"
           POSTGRES_PASSWORD: ci-runtime-only
           FLOOOW_SERVICE_TOKEN: ci-only-service-token-000000000000000000000000000000000
+          FLOOOW_SERVICE_ORGANIZATION_ID: 11111111-1111-4111-8111-111111111111
           FLOOOW_ENVIRONMENT: ci
           JAEGER_PORT: "16686"
         run: docker compose -p flooow-ci down --volumes --remove-orphans

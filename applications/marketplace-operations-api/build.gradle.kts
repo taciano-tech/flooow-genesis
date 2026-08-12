@@ -8,6 +8,7 @@ application {
 }
 
 dependencies {
+    implementation(project(":platform:foundation:organization-context"))
     implementation(project(":applications:marketplace-operations"))
     implementation(project(":applications:marketplace-operations-persistence-postgres"))
     implementation("io.ktor:ktor-server-core-jvm:3.5.1")

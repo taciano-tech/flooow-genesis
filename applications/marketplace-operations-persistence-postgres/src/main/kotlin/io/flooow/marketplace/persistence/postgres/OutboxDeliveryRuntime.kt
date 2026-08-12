@@ -1,5 +1,6 @@
 package io.flooow.marketplace.persistence.postgres
 
+import io.flooow.organization.OrganizationId
 import java.sql.Connection
 import java.sql.DriverManager
 import java.time.Clock
@@ -49,6 +50,7 @@ fun interface IntegrationEventSink {
 }
 
 data class ClaimedIntegrationEvent(
+    val organizationId: OrganizationId,
     val destinationId: DeliveryDestinationId,
     val eventId: UUID,
     val eventType: String,
@@ -58,13 +60,15 @@ data class ClaimedIntegrationEvent(
     val recoveredExpiredLease: Boolean
 ) {
     override fun equals(other: Any?): Boolean = other is ClaimedIntegrationEvent &&
-        destinationId == other.destinationId && eventId == other.eventId &&
+        organizationId == other.organizationId && destinationId == other.destinationId &&
+        eventId == other.eventId &&
         eventType == other.eventType && contentType == other.contentType &&
         structuredCloudEvent.contentEquals(other.structuredCloudEvent) &&
         attemptCount == other.attemptCount && recoveredExpiredLease == other.recoveredExpiredLease
 
     override fun hashCode(): Int = arrayOf(
         destinationId,
+        organizationId,
         eventId,
         eventType,
         contentType,
@@ -97,21 +101,37 @@ fun interface DeliveryTelemetry {
 class PostgresOutboxDeliveryStore private constructor(
     private val configuration: PostgresConfiguration
 ) {
-    fun enqueue(eventId: UUID, destinationId: DeliveryDestinationId, nextAttemptAt: Instant): Boolean =
+    fun enqueue(
+        organizationId: OrganizationId,
+        eventId: UUID,
+        destinationId: DeliveryDestinationId,
+        nextAttemptAt: Instant
+    ): Boolean =
         connection().use { connection ->
             connection.prepareStatement(
                 "INSERT INTO integration_event_delivery " +
-                    "(event_id, destination_id, status, next_attempt_at) " +
-                    "VALUES (?, ?, 'PENDING', ?) ON CONFLICT DO NOTHING"
+                    "(organization_id, event_id, destination_id, status, next_attempt_at) " +
+                    "SELECT ?, ?, ?, 'PENDING', ? WHERE EXISTS (" +
+                    "SELECT 1 FROM integration_destination d " +
+                    "JOIN integration_connection c ON c.organization_id = d.organization_id " +
+                    "AND c.connection_id = d.connection_id " +
+                    "JOIN integration_organization o ON o.organization_id = d.organization_id " +
+                    "WHERE d.organization_id = ? AND d.destination_id = ? " +
+                    "AND d.status = 'ACTIVE' AND c.status = 'ACTIVE' AND o.status = 'ACTIVE') " +
+                    "ON CONFLICT DO NOTHING"
             ).use { statement ->
-                statement.setObject(1, eventId)
-                statement.setString(2, destinationId.value)
-                statement.setTimestamp(3, java.sql.Timestamp.from(nextAttemptAt))
+                statement.setObject(1, organizationId.value)
+                statement.setObject(2, eventId)
+                statement.setString(3, destinationId.value)
+                statement.setTimestamp(4, java.sql.Timestamp.from(nextAttemptAt))
+                statement.setObject(5, organizationId.value)
+                statement.setString(6, destinationId.value)
                 statement.executeUpdate() == 1
             }
         }
 
     fun claim(
+        organizationId: OrganizationId,
         workerId: String,
         now: Instant,
         leaseDuration: Duration = Duration.ofSeconds(30),
@@ -129,14 +149,16 @@ class PostgresOutboxDeliveryStore private constructor(
                     "o.event_type, o.content_type, o.event_json::text " +
                     "FROM integration_event_delivery d " +
                     "JOIN integration_event_outbox o ON o.event_id = d.event_id " +
-                    "WHERE ((d.status = 'PENDING' AND d.next_attempt_at <= ?) OR " +
+                    "AND o.organization_id = d.organization_id " +
+                    "WHERE d.organization_id = ? AND ((d.status = 'PENDING' AND d.next_attempt_at <= ?) OR " +
                     "(d.status = 'IN_FLIGHT' AND d.lease_until <= ?)) " +
                     "ORDER BY d.next_attempt_at, o.created_at, d.event_id, d.destination_id " +
                     "FOR UPDATE OF d SKIP LOCKED LIMIT ?"
             ).use { statement ->
-                statement.setTimestamp(1, java.sql.Timestamp.from(now))
+                statement.setObject(1, organizationId.value)
                 statement.setTimestamp(2, java.sql.Timestamp.from(now))
-                statement.setInt(3, batchSize)
+                statement.setTimestamp(3, java.sql.Timestamp.from(now))
+                statement.setInt(4, batchSize)
                 statement.executeQuery().use { result ->
                     buildList {
                         while (result.next()) {
@@ -162,22 +184,24 @@ class PostgresOutboxDeliveryStore private constructor(
                 connection.prepareStatement(
                     "UPDATE integration_event_delivery SET status = 'IN_FLIGHT', " +
                         "attempt_count = ?, lease_owner = ?, lease_until = ?, " +
-                        "last_attempt_at = ?, last_error_code = NULL, updated_at = ? " +
-                        "WHERE event_id = ? AND destination_id = ?"
+                    "last_attempt_at = ?, last_error_code = NULL, updated_at = ? " +
+                        "WHERE organization_id = ? AND event_id = ? AND destination_id = ?"
                 ).use { statement ->
                     statement.setInt(1, candidate.attemptCount)
                     statement.setString(2, workerId)
                     statement.setTimestamp(3, java.sql.Timestamp.from(now.plus(leaseDuration)))
                     statement.setTimestamp(4, java.sql.Timestamp.from(now))
                     statement.setTimestamp(5, java.sql.Timestamp.from(now))
-                    statement.setObject(6, candidate.eventId)
-                    statement.setString(7, candidate.destinationId.value)
+                    statement.setObject(6, organizationId.value)
+                    statement.setObject(7, candidate.eventId)
+                    statement.setString(8, candidate.destinationId.value)
                     check(statement.executeUpdate() == 1)
                 }
             }
 
             candidates.map { candidate ->
                 ClaimedIntegrationEvent(
+                    organizationId = organizationId,
                     destinationId = candidate.destinationId,
                     eventId = candidate.eventId,
                     eventType = candidate.eventType,
@@ -247,7 +271,7 @@ class PostgresOutboxDeliveryStore private constructor(
     ): DeliverySettlement = connection().use { connection ->
         connection.prepareStatement(
             "UPDATE integration_event_delivery SET $assignment " +
-                "WHERE event_id = ? AND destination_id = ? AND " +
+                "WHERE organization_id = ? AND event_id = ? AND destination_id = ? AND " +
                 "status = 'IN_FLIGHT' AND lease_owner = ? AND " +
                 "attempt_count = ? AND lease_until > ?"
         ).use { statement ->
@@ -260,6 +284,7 @@ class PostgresOutboxDeliveryStore private constructor(
                 }
                 index++
             }
+            statement.setObject(index++, delivery.organizationId.value)
             statement.setObject(index++, delivery.eventId)
             statement.setString(index++, delivery.destinationId.value)
             statement.setString(index++, workerId)
@@ -308,13 +333,20 @@ class OutboxDeliveryDispatcher(
     private val nanoTime: () -> Long = System::nanoTime
 ) {
     fun dispatchBatch(
+        organizationId: OrganizationId,
         workerId: String,
         leaseDuration: Duration = Duration.ofSeconds(30),
         batchSize: Int = 10,
         shouldContinue: () -> Boolean = { true }
     ): Int {
         if (!shouldContinue()) return 0
-        val claims = store.claim(workerId, clock.instant(), leaseDuration, batchSize)
+        val claims = store.claim(
+            organizationId,
+            workerId,
+            clock.instant(),
+            leaseDuration,
+            batchSize
+        )
         var attempted = 0
         for (delivery in claims) {
             if (!shouldContinue()) break
@@ -393,7 +425,9 @@ private fun canonicalCloudEvent(value: String): ByteArray {
         copy(stored, "time")
         copy(stored, "datacontenttype")
         copy(stored, "dataschema")
+        copy(stored, "floooworganizationid")
         put("data", buildJsonObject {
+            copy(data, "organizationId")
             copy(data, "assessmentId")
             copy(data, "sku")
             copy(data, "observedOn")

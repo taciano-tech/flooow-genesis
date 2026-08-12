@@ -1,5 +1,6 @@
 package io.flooow.marketplace.operations.inventory
 
+import io.flooow.organization.OrganizationId
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -9,6 +10,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
 class InventoryRiskAssessmentRecorderTest {
+    private val organizationId =
+        OrganizationId.parse("11111111-1111-4111-8111-111111111111")
     private val input = InventoryRiskInput(
         sku = "RED-MOTO-001",
         periodEnd = LocalDate.parse("2026-08-31"),
@@ -31,9 +34,9 @@ class InventoryRiskAssessmentRecorderTest {
             clock = Clock.fixed(Instant.parse("2026-08-10T13:00:00Z"), ZoneOffset.UTC)
         )
 
-        val recorded = recorder.record(input)
+        val recorded = recorder.record(organizationId, input)
 
-        assertEquals(recorded, journal.findById(recorded.assessmentId))
+        assertEquals(recorded, journal.findById(organizationId, recorded.assessmentId))
         assertEquals(64, recorded.requestDigest.length)
         assertEquals(64, recorded.resultDigest.length)
     }
@@ -50,8 +53,8 @@ class InventoryRiskAssessmentRecorderTest {
             }
         )
 
-        val first = recorder.record(input)
-        val second = recorder.record(input)
+        val first = recorder.record(organizationId, input)
+        val second = recorder.record(organizationId, input)
 
         assertNotEquals(first.assessmentId, second.assessmentId)
         assertEquals(first.requestDigest, second.requestDigest)
@@ -59,13 +62,20 @@ class InventoryRiskAssessmentRecorderTest {
     }
 
     private class InMemoryJournal : InventoryRiskAssessmentJournal {
-        private val records = linkedMapOf<String, RecordedInventoryRiskAssessment>()
+        private val records =
+            linkedMapOf<Pair<OrganizationId, String>, RecordedInventoryRiskAssessment>()
 
-        override fun append(record: RecordedInventoryRiskAssessment) {
-            check(records.putIfAbsent(record.assessmentId, record) == null)
+        override fun append(
+            organizationId: OrganizationId,
+            record: RecordedInventoryRiskAssessment
+        ) {
+            require(record.organizationId == organizationId)
+            check(records.putIfAbsent(organizationId to record.assessmentId, record) == null)
         }
 
-        override fun findById(assessmentId: String): RecordedInventoryRiskAssessment? =
-            records[assessmentId]
+        override fun findById(
+            organizationId: OrganizationId,
+            assessmentId: String
+        ): RecordedInventoryRiskAssessment? = records[organizationId to assessmentId]
     }
 }
