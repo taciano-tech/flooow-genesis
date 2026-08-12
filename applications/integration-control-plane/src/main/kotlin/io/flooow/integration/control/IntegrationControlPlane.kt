@@ -345,6 +345,19 @@ class IntegrationControlPlaneService(
         )
     }
 
+    fun activeConnectionProvider(
+        organizationId: IntegrationOrganizationId,
+        connectionId: IntegrationConnectionId
+    ): ProviderKey? {
+        if (repository.findOrganization(organizationId)?.status !=
+            IntegrationOrganizationStatus.ACTIVE) return null
+        val connection = repository.findConnection(organizationId, connectionId)
+            ?: return null
+        if (connection.status != IntegrationConnectionStatus.ACTIVE) return null
+        if (repository.currentBinding(organizationId, connectionId) == null) return null
+        return connection.providerKey
+    }
+
     fun registerDestination(
         organizationId: IntegrationOrganizationId,
         connectionId: IntegrationConnectionId,

@@ -86,6 +86,7 @@ class PostgresIntegrationControlPlaneRepositoryTest {
             ProviderKey.of("br.com.mercadolivre"),
             CredentialKind.OAUTH2_AUTHORIZATION_CODE
         )
+        assertNull(service.activeConnectionProvider(firstOrganization.id, connection.id))
         assertNull(repository.findConnection(secondOrganization.id, connection.id))
 
         val firstSecret = "first-refresh-token".toByteArray()
@@ -95,6 +96,11 @@ class PostgresIntegrationControlPlaneRepositoryTest {
             IntegrationConnectionStatus.ACTIVE,
             repository.findConnection(firstOrganization.id, connection.id)?.status
         )
+        assertEquals(
+            ProviderKey.of("br.com.mercadolivre"),
+            service.activeConnectionProvider(firstOrganization.id, connection.id)
+        )
+        assertNull(service.activeConnectionProvider(secondOrganization.id, connection.id))
 
         val destination = service.registerDestination(firstOrganization.id, connection.id)
         assertNull(repository.findDestination(secondOrganization.id, destination.id))
@@ -128,12 +134,18 @@ class PostgresIntegrationControlPlaneRepositoryTest {
         assertTrue(callbackBytes.all { it == 0.toByte() })
 
         service.suspendConnection(firstOrganization.id, connection.id)
+        assertNull(service.activeConnectionProvider(firstOrganization.id, connection.id))
         assertFails {
             service.withActiveCredential(firstOrganization.id, connection.id) { it.size }
         }
         assertFails { service.registerDestination(firstOrganization.id, connection.id) }
         service.resumeConnection(firstOrganization.id, connection.id)
+        assertEquals(
+            ProviderKey.of("br.com.mercadolivre"),
+            service.activeConnectionProvider(firstOrganization.id, connection.id)
+        )
         service.suspendOrganization(firstOrganization.id)
+        assertNull(service.activeConnectionProvider(firstOrganization.id, connection.id))
         assertFails {
             service.withActiveCredential(firstOrganization.id, connection.id) { it.size }
         }
@@ -146,6 +158,7 @@ class PostgresIntegrationControlPlaneRepositoryTest {
         }
         service.resumeOrganization(firstOrganization.id)
         service.revokeConnection(firstOrganization.id, connection.id)
+        assertNull(service.activeConnectionProvider(firstOrganization.id, connection.id))
         assertEquals(
             IntegrationConnectionStatus.REVOKED,
             repository.findConnection(firstOrganization.id, connection.id)?.status
