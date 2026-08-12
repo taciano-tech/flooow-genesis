@@ -9,6 +9,7 @@ import io.flooow.marketplace.operations.inventory.PersistenceUnavailableExceptio
 import io.flooow.marketplace.operations.inventory.RecordedInventoryRiskAssessment
 import io.flooow.marketplace.persistence.postgres.PostgresConfiguration
 import io.flooow.marketplace.persistence.postgres.PostgresInventoryRiskAssessmentJournal
+import io.flooow.organization.OrganizationId
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -18,9 +19,9 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
-import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.bearer
+import io.ktor.server.auth.principal
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.statuspages.StatusPages
@@ -65,12 +66,18 @@ fun main() {
     val host = System.getenv("HOST") ?: "0.0.0.0"
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
     val serviceToken = ServiceToken.fromEnvironment()
+    val serviceOrganizationId = serviceOrganizationFromEnvironment()
     val journal = PostgresInventoryRiskAssessmentJournal.connect(
         PostgresConfiguration.fromEnvironment()
     )
     val recorder = InventoryRiskAssessmentRecorder(journal)
     embeddedServer(Netty, host = host, port = port) {
-        configureApi(serviceToken, recorder::record, recorder::findById)
+        configureApi(
+            serviceToken,
+            serviceOrganizationId,
+            recorder::record,
+            recorder::findById
+        )
     }.start(wait = true)
 }
 
@@ -85,13 +92,19 @@ fun Application.module() {
         },
         clock = Clock.fixed(Instant.parse("2026-08-10T13:00:00Z"), ZoneOffset.UTC)
     )
-    configureApi(ServiceToken.test(TEST_SERVICE_TOKEN), recorder::record, recorder::findById)
+    configureApi(
+        ServiceToken.test(TEST_SERVICE_TOKEN),
+        TEST_ORGANIZATION_ID,
+        recorder::record,
+        recorder::findById
+    )
 }
 
 internal fun Application.configureApi(
     serviceToken: ServiceToken,
-    record: (InventoryRiskInput) -> RecordedInventoryRiskAssessment,
-    findById: (String) -> RecordedInventoryRiskAssessment? = { null }
+    serviceOrganizationId: OrganizationId,
+    record: (OrganizationId, InventoryRiskInput) -> RecordedInventoryRiskAssessment,
+    findById: (OrganizationId, String) -> RecordedInventoryRiskAssessment? = { _, _ -> null }
 ) {
     install(Authentication) {
         bearer("service-bearer") {
@@ -117,7 +130,7 @@ internal fun Application.configureApi(
             }
             authenticate { credential ->
                 if (serviceToken.matches(credential.token)) {
-                    UserIdPrincipal("service-client")
+                    ServicePrincipal(serviceOrganizationId)
                 } else {
                     null
                 }
@@ -248,7 +261,9 @@ internal fun Application.configureApi(
                         error.message ?: "Inventory risk request is invalid"
                     )
                 }
-                val recorded = record(input)
+                val organizationId = requireNotNull(call.principal<ServicePrincipal>())
+                    .organizationId
+                val recorded = record(organizationId, input)
                 call.response.header(
                     "Location",
                     "$ASSESSMENT_PATH/${recorded.assessmentId}"
@@ -259,7 +274,10 @@ internal fun Application.configureApi(
                 val assessmentId = canonicalAssessmentId(
                     call.parameters["assessmentId"].orEmpty()
                 )
-                val recorded = findById(assessmentId) ?: throw AssessmentNotFoundException()
+                val organizationId = requireNotNull(call.principal<ServicePrincipal>())
+                    .organizationId
+                val recorded = findById(organizationId, assessmentId) ?:
+                    throw AssessmentNotFoundException()
                 call.respondJson(recordedAssessmentJson(recorded))
             }
         }
@@ -422,14 +440,20 @@ private fun canonicalAssessmentId(value: String): String {
 }
 
 private class InMemoryAssessmentJournal : InventoryRiskAssessmentJournal {
-    private val records = linkedMapOf<String, RecordedInventoryRiskAssessment>()
+    private val records = linkedMapOf<Pair<OrganizationId, String>, RecordedInventoryRiskAssessment>()
 
-    override fun append(record: RecordedInventoryRiskAssessment) {
-        check(records.putIfAbsent(record.assessmentId, record) == null)
+    override fun append(
+        organizationId: OrganizationId,
+        record: RecordedInventoryRiskAssessment
+    ) {
+        require(record.organizationId == organizationId)
+        check(records.putIfAbsent(organizationId to record.assessmentId, record) == null)
     }
 
-    override fun findById(assessmentId: String): RecordedInventoryRiskAssessment? =
-        records[assessmentId]
+    override fun findById(
+        organizationId: OrganizationId,
+        assessmentId: String
+    ): RecordedInventoryRiskAssessment? = records[organizationId to assessmentId]
 }
 
 private class MalformedRequestException(message: String) : RuntimeException(message)
@@ -440,3 +464,5 @@ private class AssessmentNotFoundException : RuntimeException()
 
 internal const val TEST_SERVICE_TOKEN =
     "test-only-service-token-00000000000000000000000000000000"
+internal val TEST_ORGANIZATION_ID =
+    OrganizationId.parse("11111111-1111-4111-8111-111111111111")

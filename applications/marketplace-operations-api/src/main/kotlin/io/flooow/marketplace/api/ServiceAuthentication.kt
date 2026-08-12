@@ -1,5 +1,6 @@
 package io.flooow.marketplace.api
 
+import io.flooow.organization.OrganizationId
 import java.security.MessageDigest
 
 internal const val LOCAL_SERVICE_TOKEN =
@@ -35,5 +36,22 @@ internal class ServiceToken private constructor(private val bytes: ByteArray) {
         }
 
         fun test(value: String): ServiceToken = ServiceToken(value.toByteArray(Charsets.UTF_8))
+    }
+}
+
+internal data class ServicePrincipal(val organizationId: OrganizationId)
+
+internal fun serviceOrganizationFromEnvironment(
+    environment: Map<String, String> = System.getenv()
+): OrganizationId {
+    val value = requireNotNull(environment["FLOOOW_SERVICE_ORGANIZATION_ID"]) {
+        "FLOOOW_SERVICE_ORGANIZATION_ID is required"
+    }
+    return try {
+        OrganizationId.parse(value)
+    } catch (_: IllegalArgumentException) {
+        throw IllegalArgumentException(
+            "FLOOOW_SERVICE_ORGANIZATION_ID must be a canonical UUID"
+        )
     }
 }

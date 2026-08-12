@@ -1,5 +1,6 @@
 package io.flooow.marketplace.operations.inventory
 
+import io.flooow.organization.OrganizationId
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.Instant
@@ -7,6 +8,7 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 data class RecordedInventoryRiskAssessment(
+    val organizationId: OrganizationId,
     val assessmentId: String,
     val schemaVersion: Int,
     val recordedAt: Instant,
@@ -20,9 +22,12 @@ data class RecordedInventoryRiskAssessment(
 )
 
 interface InventoryRiskAssessmentJournal {
-    fun append(record: RecordedInventoryRiskAssessment)
+    fun append(organizationId: OrganizationId, record: RecordedInventoryRiskAssessment)
 
-    fun findById(assessmentId: String): RecordedInventoryRiskAssessment?
+    fun findById(
+        organizationId: OrganizationId,
+        assessmentId: String
+    ): RecordedInventoryRiskAssessment?
 }
 
 fun interface AssessmentIdentifierFactory {
@@ -39,9 +44,13 @@ class InventoryRiskAssessmentRecorder(
     private val identifierFactory: AssessmentIdentifierFactory = UuidAssessmentIdentifierFactory(),
     private val clock: Clock = Clock.systemUTC()
 ) {
-    fun record(input: InventoryRiskInput): RecordedInventoryRiskAssessment {
+    fun record(
+        organizationId: OrganizationId,
+        input: InventoryRiskInput
+    ): RecordedInventoryRiskAssessment {
         val assessment = evaluator.evaluate(input)
         val record = RecordedInventoryRiskAssessment(
+            organizationId = organizationId,
             assessmentId = identifierFactory.create(),
             schemaVersion = 1,
             recordedAt = clock.instant().truncatedTo(ChronoUnit.MICROS),
@@ -53,12 +62,14 @@ class InventoryRiskAssessmentRecorder(
             requestDigest = InventoryRiskAssessmentDigests.request(input),
             resultDigest = InventoryRiskAssessmentDigests.result(assessment)
         )
-        journal.append(record)
+        journal.append(organizationId, record)
         return record
     }
 
-    fun findById(assessmentId: String): RecordedInventoryRiskAssessment? =
-        journal.findById(assessmentId)
+    fun findById(
+        organizationId: OrganizationId,
+        assessmentId: String
+    ): RecordedInventoryRiskAssessment? = journal.findById(organizationId, assessmentId)
 }
 
 object InventoryRiskAssessmentDigests {

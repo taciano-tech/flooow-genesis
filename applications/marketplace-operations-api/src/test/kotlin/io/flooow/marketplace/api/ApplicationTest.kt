@@ -224,7 +224,8 @@ class ApplicationTest {
         application {
             configureApi(
                 serviceToken = ServiceToken.test(TEST_SERVICE_TOKEN),
-                record = { error("secret filesystem C:/internal/path") }
+                serviceOrganizationId = TEST_ORGANIZATION_ID,
+                record = { _, _ -> error("secret filesystem C:/internal/path") }
             )
         }
 
@@ -282,7 +283,8 @@ class ApplicationTest {
         application {
             configureApi(
                 serviceToken = ServiceToken.test(TEST_SERVICE_TOKEN),
-                record = {
+                serviceOrganizationId = TEST_ORGANIZATION_ID,
+                record = { _, _ ->
                     evaluations += 1
                     error("must not evaluate")
                 }
@@ -304,8 +306,9 @@ class ApplicationTest {
         application {
             configureApi(
                 serviceToken = ServiceToken.test(TEST_SERVICE_TOKEN),
-                record = { error("must not record") },
-                findById = {
+                serviceOrganizationId = TEST_ORGANIZATION_ID,
+                record = { _, _ -> error("must not record") },
+                findById = { _, _ ->
                     lookups += 1
                     error("must not query")
                 }
@@ -319,6 +322,36 @@ class ApplicationTest {
         assertProblem(response.status, response.bodyAsText(), 401, "AUTHENTICATION_REQUIRED")
         assertEquals(0, lookups)
     }
+
+    @Test
+    fun `authenticated organization is server owned and request headers cannot override it`() =
+        testApplication {
+            var observedOrganization = TEST_ORGANIZATION_ID
+            application {
+                configureApi(
+                    serviceToken = ServiceToken.test(TEST_SERVICE_TOKEN),
+                    serviceOrganizationId = TEST_ORGANIZATION_ID,
+                    record = { _, _ -> error("must not record") },
+                    findById = { organizationId, _ ->
+                        observedOrganization = organizationId
+                        null
+                    }
+                )
+            }
+
+            val response = client.get(
+                "$assessmentPath/11111111-1111-4111-8111-111111111111"
+            ) {
+                bearerAuth(TEST_SERVICE_TOKEN)
+                header(
+                    "X-Organization-Id",
+                    "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+                )
+            }
+
+            assertEquals(HttpStatusCode.NotFound, response.status)
+            assertEquals(TEST_ORGANIZATION_ID, observedOrganization)
+        }
 
     @Test
     fun `service token configuration fails safely`() {
@@ -346,6 +379,21 @@ class ApplicationTest {
                 "FLOOOW_ENVIRONMENT" to "local"
             )
         )
+
+        assertEquals(
+            TEST_ORGANIZATION_ID,
+            serviceOrganizationFromEnvironment(
+                mapOf("FLOOOW_SERVICE_ORGANIZATION_ID" to TEST_ORGANIZATION_ID.toString())
+            )
+        )
+        listOf(emptyMap(), mapOf("FLOOOW_SERVICE_ORGANIZATION_ID" to "not-a-uuid"))
+            .forEach { environment ->
+                assertNotNull(
+                    kotlin.runCatching {
+                        serviceOrganizationFromEnvironment(environment)
+                    }.exceptionOrNull()
+                )
+            }
     }
 
     @Test
@@ -353,7 +401,8 @@ class ApplicationTest {
         application {
             configureApi(
                 serviceToken = ServiceToken.test(TEST_SERVICE_TOKEN),
-                record = { error("business evaluation must not run") }
+                serviceOrganizationId = TEST_ORGANIZATION_ID,
+                record = { _, _ -> error("business evaluation must not run") }
             )
         }
 
