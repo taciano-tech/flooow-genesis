@@ -1,14 +1,15 @@
 plugins {
     id("flooow.kotlin-conventions")
+    `java-library`
 }
 
 dependencies {
-    implementation(project(":platform:foundation:organization-context"))
-    implementation(project(":applications:integration-control-plane"))
-    implementation(project(":applications:inventory-identity-mapping"))
-    implementation(project(":applications:inventory-canonical-observation"))
-    implementation(project(":applications:inventory-source-acceptance"))
-    implementation(project(":applications:inventory-measure-selection"))
+    api(project(":platform:foundation:organization-context"))
+    api(project(":applications:integration-control-plane"))
+    api(project(":applications:inventory-identity-mapping"))
+    api(project(":applications:inventory-canonical-observation"))
+    api(project(":applications:inventory-source-acceptance"))
+    api(project(":applications:inventory-measure-selection"))
     testImplementation(kotlin("test"))
 }
 
