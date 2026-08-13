@@ -5,12 +5,14 @@ import io.flooow.integration.inventory.acceptance.*
 import io.flooow.integration.inventory.mapping.*
 import io.flooow.integration.inventory.observation.*
 import io.flooow.integration.inventory.selection.*
+import io.flooow.integration.inventory.snapshot.*
 import io.flooow.integration.inventory.source.SourceItemReference
 import io.flooow.integration.inventory.source.SourceUnitCode
 import io.flooow.organization.OrganizationId
 import java.math.BigInteger
 import java.sql.Connection
 import java.sql.DriverManager
+import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Timestamp
 import java.time.Clock
@@ -513,6 +515,183 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
         } finally { executor.shutdownNow() }
     }
 
+    @Test
+    fun `candidate snapshot freezes exact selected provenance and survives withdrawal`() {
+        val scope = activeConnection()
+        seedLedger(scope, "snapshot-item", "BOX", "4", "-2.5", "0", "6", "9")
+        val mappings = mappingService()
+        val item = mappings.createItem(scope.first).second
+        val unit = mappings.createUnit(scope.first).second
+        val selector = selector(scope.second, "snapshot-item", "BOX")
+        mappings.activateInitial(
+            scope.first, selector,
+            InventoryMappingTarget(item, null, unit, QuantityFactor.of(1, 3)),
+            InventoryMappingEvidence(scope.second, inputProgressVersion = 0, recordOrdinal = 0),
+            InventoryMappingPrincipalReference.of("test-principal")
+        )
+        val root = mappings.history(scope.first, selector).single()
+        val projected = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observationService().project(scope.first, pointer(scope.second))
+        )
+        acceptanceService().acceptInitial(
+            scope.first, root.id, projected.observationId,
+            InventoryAcceptancePrincipalReference.of("test-principal")
+        )
+        val selected = assertIs<CanonicalInventoryMeasureSelectionResult.Selected>(
+            selectionService().selectInitial(
+                scope.first, root.id, CanonicalInventoryMeasure.ON_HAND,
+                InventoryMeasureSelectionPrincipalReference.of("test-principal")
+            )
+        )
+        val requestId = CanonicalInventoryCandidateSnapshotRequestId.of(uuid())
+        val target = CanonicalInventoryCandidateTarget(item, null, unit)
+        val snapshots = snapshotService()
+        val captured = assertIs<CanonicalInventoryCandidateSnapshotCaptureResult.Captured>(
+            snapshots.capture(
+                scope.first, requestId, target, listOf(root.id),
+                InventoryCandidateSnapshotPrincipalReference.of("test-principal")
+            )
+        )
+        assertEquals(1, captured.memberCount)
+        val replay = assertIs<CanonicalInventoryCandidateSnapshotCaptureResult.AlreadyCaptured>(
+            snapshots.capture(
+                scope.first, requestId, target, listOf(root.id),
+                InventoryCandidateSnapshotPrincipalReference.of("different-principal")
+            )
+        )
+        assertEquals(captured.snapshotId, replay.snapshotId)
+        assertIs<CanonicalInventoryCandidateSnapshotCaptureResult.Conflict>(
+            snapshots.capture(
+                scope.first, requestId,
+                CanonicalInventoryCandidateTarget(InventoryItemId.of(uuid()), null, unit),
+                listOf(root.id),
+                InventoryCandidateSnapshotPrincipalReference.of("test-principal")
+            )
+        )
+        val found = assertIs<CanonicalInventoryCandidateSnapshotReadResult.Found>(
+            snapshots.find(scope.first, captured.snapshotId)
+        ).snapshot
+        val member = found.members.single()
+        assertEquals(BigInteger.valueOf(-5), member.exactQuantity.numeratorForPersistence())
+        assertEquals(6, member.exactQuantity.denominatorForPersistence())
+        assertEquals(selected.selectionId, member.selectionId)
+        assertEquals(projected.observationId, member.observationId)
+        assertFalse(columnExists("integration_inventory_candidate_snapshot_member", "exact_quantity"))
+        assertFalse(columnExists("integration_inventory_candidate_snapshot_member", "quantity"))
+
+        assertIs<CanonicalInventoryMeasureSelectionResult.Withdrawn>(
+            selectionService().withdraw(
+                scope.first, root.id, selected.selectionId, selected.revision,
+                InventoryMeasureSelectionPrincipalReference.of("test-principal"),
+                CanonicalInventoryMeasureSelectionReason.OPERATOR_WITHDRAWAL
+            )
+        )
+        assertIs<CanonicalInventoryCandidateSnapshotReadResult.Found>(
+            snapshots.find(scope.first, captured.snapshotId)
+        )
+        assertIs<CanonicalInventoryCandidateSnapshotCaptureResult.AlreadyCaptured>(
+            snapshots.capture(
+                scope.first, requestId, target, listOf(root.id),
+                InventoryCandidateSnapshotPrincipalReference.of("test-principal")
+            )
+        )
+        assertFailsWith<SQLException> {
+            execute("UPDATE integration_inventory_candidate_snapshot SET member_count=2")
+        }
+        assertFailsWith<SQLException> {
+            execute("DELETE FROM integration_inventory_candidate_snapshot_member")
+        }
+    }
+
+    @Test
+    fun `candidate snapshot rejects target mismatch atomically`() {
+        val scope = activeConnection()
+        seedLedger(scope, "snapshot-mismatch", null, "5", null, null, null)
+        val mappings = mappingService()
+        val item = mappings.createItem(scope.first).second
+        val otherItem = mappings.createItem(scope.first).second
+        val unit = mappings.createUnit(scope.first).second
+        val selector = selector(scope.second, "snapshot-mismatch", null)
+        mappings.activateInitial(
+            scope.first, selector,
+            InventoryMappingTarget(item, null, unit, QuantityFactor.of(1, 1)),
+            InventoryMappingEvidence(scope.second, inputProgressVersion = 0, recordOrdinal = 0),
+            InventoryMappingPrincipalReference.of("test-principal")
+        )
+        val root = mappings.history(scope.first, selector).single()
+        val projected = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observationService().project(scope.first, pointer(scope.second))
+        )
+        acceptanceService().acceptInitial(
+            scope.first, root.id, projected.observationId,
+            InventoryAcceptancePrincipalReference.of("test-principal")
+        )
+        selectionService().selectInitial(
+            scope.first, root.id, CanonicalInventoryMeasure.AVAILABLE_TO_SELL,
+            InventoryMeasureSelectionPrincipalReference.of("test-principal")
+        )
+        assertIs<CanonicalInventoryCandidateSnapshotCaptureResult.TargetMismatch>(
+            snapshotService().capture(
+                scope.first, CanonicalInventoryCandidateSnapshotRequestId.of(uuid()),
+                CanonicalInventoryCandidateTarget(otherItem, null, unit), listOf(root.id),
+                InventoryCandidateSnapshotPrincipalReference.of("test-principal")
+            )
+        )
+        assertEquals(0, count("integration_inventory_candidate_snapshot"))
+        assertEquals(0, count("integration_inventory_candidate_snapshot_member"))
+    }
+
+    @Test
+    fun `concurrent identical candidate capture creates one immutable snapshot`() {
+        val scope = activeConnection()
+        seedLedger(scope, "snapshot-race", null, "7", null, null, null)
+        val mappings = mappingService()
+        val item = mappings.createItem(scope.first).second
+        val unit = mappings.createUnit(scope.first).second
+        val selector = selector(scope.second, "snapshot-race", null)
+        mappings.activateInitial(
+            scope.first, selector,
+            InventoryMappingTarget(item, null, unit, QuantityFactor.of(1, 1)),
+            InventoryMappingEvidence(scope.second, inputProgressVersion = 0, recordOrdinal = 0),
+            InventoryMappingPrincipalReference.of("test-principal")
+        )
+        val root = mappings.history(scope.first, selector).single()
+        val projected = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observationService().project(scope.first, pointer(scope.second))
+        )
+        acceptanceService().acceptInitial(
+            scope.first, root.id, projected.observationId,
+            InventoryAcceptancePrincipalReference.of("test-principal")
+        )
+        selectionService().selectInitial(
+            scope.first, root.id, CanonicalInventoryMeasure.AVAILABLE_TO_SELL,
+            InventoryMeasureSelectionPrincipalReference.of("test-principal")
+        )
+        val requestId = CanonicalInventoryCandidateSnapshotRequestId.of(uuid())
+        val target = CanonicalInventoryCandidateTarget(item, null, unit)
+        val executor = Executors.newFixedThreadPool(2)
+        try {
+            val results = executor.invokeAll(listOf(
+                Callable { snapshotService().capture(
+                    scope.first, requestId, target, listOf(root.id),
+                    InventoryCandidateSnapshotPrincipalReference.of("test-principal")
+                ) },
+                Callable { snapshotService().capture(
+                    scope.first, requestId, target, listOf(root.id),
+                    InventoryCandidateSnapshotPrincipalReference.of("test-principal")
+                ) }
+            )).map { it.get() }
+            assertEquals(1, results.count {
+                it is CanonicalInventoryCandidateSnapshotCaptureResult.Captured
+            })
+            assertEquals(1, results.count {
+                it is CanonicalInventoryCandidateSnapshotCaptureResult.AlreadyCaptured
+            })
+            assertEquals(1, count("integration_inventory_candidate_snapshot"))
+            assertEquals(1, count("integration_inventory_candidate_snapshot_member"))
+        } finally { executor.shutdownNow() }
+    }
+
     private fun activeConnection(): Pair<OrganizationId, IntegrationConnectionId> {
         val organization = control.createOrganization()
         val connection = control.createConnection(
@@ -548,6 +727,16 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
         PostgresCanonicalInventoryMeasureSelectionRepository(configuration),
         SelectionIdentifierFactory { CanonicalInventoryMeasureSelectionId.of(uuid()) },
         SelectionIdentifierFactory { CanonicalInventoryMeasureSelectionCorrelationId.of(uuid()) }
+    )
+
+    private fun snapshotService() = CanonicalInventoryCandidateSnapshotService(
+        PostgresCanonicalInventoryCandidateSnapshotRepository(configuration),
+        CandidateSnapshotIdentifierFactory {
+            CanonicalInventoryCandidateSnapshotId.of(uuid())
+        },
+        CandidateSnapshotIdentifierFactory {
+            CanonicalInventoryCandidateSnapshotCorrelationId.of(uuid())
+        }
     )
 
     private fun selector(connectionId: IntegrationConnectionId, item: String, unit: String?) =
@@ -655,6 +844,16 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
     private fun count(table: String): Int = connection().use { connection ->
         connection.createStatement().use { statement ->
             statement.executeQuery("SELECT COUNT(*) FROM $table").use { result -> result.next(); result.getInt(1) }
+        }
+    }
+
+    private fun columnExists(table: String, column: String): Boolean = connection().use { connection ->
+        connection.prepareStatement(
+            "SELECT 1 FROM information_schema.columns WHERE table_name=? AND column_name=?"
+        ).use { statement ->
+            statement.setString(1, table)
+            statement.setString(2, column)
+            statement.executeQuery().use(ResultSet::next)
         }
     }
 

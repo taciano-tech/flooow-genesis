@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":applications:inventory-canonical-observation"))
     implementation(project(":applications:inventory-source-acceptance"))
     implementation(project(":applications:inventory-measure-selection"))
+    implementation(project(":applications:inventory-candidate-snapshot"))
     implementation("org.jetbrains.exposed:exposed-core:1.4.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:1.4.0")
     implementation("org.jetbrains.exposed:exposed-java-time:1.4.0")
