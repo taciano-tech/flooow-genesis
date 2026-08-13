@@ -4,6 +4,7 @@ import io.flooow.integration.control.*
 import io.flooow.integration.inventory.acceptance.*
 import io.flooow.integration.inventory.mapping.*
 import io.flooow.integration.inventory.observation.*
+import io.flooow.integration.inventory.selection.*
 import io.flooow.integration.inventory.source.SourceItemReference
 import io.flooow.integration.inventory.source.SourceUnitCode
 import io.flooow.organization.OrganizationId
@@ -344,6 +345,174 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
         } finally { executor.shutdownNow() }
     }
 
+    @Test
+    fun `selected measure resolves exact current acceptance and preserves immutable history`() {
+        val scope = activeConnection()
+        seedLedger(scope, "selected-item", "BOX", "4", "-2.5", "0", "6", "9")
+        val mappings = mappingService()
+        val item = mappings.createItem(scope.first).second
+        val unit = mappings.createUnit(scope.first).second
+        val selector = selector(scope.second, "selected-item", "BOX")
+        mappings.activateInitial(
+            scope.first, selector,
+            InventoryMappingTarget(item, null, unit, QuantityFactor.of(1, 3)),
+            InventoryMappingEvidence(scope.second, inputProgressVersion = 0, recordOrdinal = 0),
+            InventoryMappingPrincipalReference.of("test-principal")
+        )
+        val root = mappings.history(scope.first, selector).single()
+        val projected = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observationService().project(scope.first, pointer(scope.second))
+        )
+        acceptanceService().acceptInitial(
+            scope.first, root.id, projected.observationId,
+            InventoryAcceptancePrincipalReference.of("test-principal")
+        )
+        val selections = selectionService()
+        val principal = InventoryMeasureSelectionPrincipalReference.of("test-principal")
+        val initial = assertIs<CanonicalInventoryMeasureSelectionResult.Selected>(
+            selections.selectInitial(scope.first, root.id, CanonicalInventoryMeasure.ON_HAND, principal)
+        )
+        assertIs<CanonicalInventoryMeasureSelectionResult.AlreadySelected>(
+            selections.selectInitial(scope.first, root.id, CanonicalInventoryMeasure.ON_HAND, principal)
+        )
+        val exact = assertIs<CanonicalInventoryMeasureResolutionResult.Resolved>(
+            selections.resolve(scope.first, root.id)
+        ).selectedCandidate
+        assertEquals(BigInteger.valueOf(-5), exact.exactQuantity.numeratorForPersistence())
+        assertEquals(6, exact.exactQuantity.denominatorForPersistence())
+
+        val replacement = assertIs<CanonicalInventoryMeasureSelectionResult.Selected>(
+            selections.replace(
+                scope.first, root.id, initial.selectionId, initial.revision,
+                CanonicalInventoryMeasure.RESERVED, principal,
+                CanonicalInventoryMeasureSelectionReason.OPERATOR_CORRECTION
+            )
+        )
+        val zero = assertIs<CanonicalInventoryMeasureResolutionResult.Resolved>(
+            selections.resolve(scope.first, root.id)
+        ).selectedCandidate
+        assertEquals(BigInteger.ZERO, zero.exactQuantity.numeratorForPersistence())
+        assertEquals(1, zero.exactQuantity.denominatorForPersistence())
+        assertEquals(
+            listOf(CanonicalInventoryMeasureSelectionState.RETIRED,
+                CanonicalInventoryMeasureSelectionState.ACTIVE),
+            selections.history(scope.first, root.id).map { it.state }
+        )
+        assertIs<CanonicalInventoryMeasureSelectionResult.Withdrawn>(
+            selections.withdraw(
+                scope.first, root.id, replacement.selectionId, replacement.revision, principal,
+                CanonicalInventoryMeasureSelectionReason.OPERATOR_WITHDRAWAL
+            )
+        )
+        assertNull(selections.head(scope.first, root.id))
+        assertIs<CanonicalInventoryMeasureResolutionResult.Unselected>(
+            selections.resolve(scope.first, root.id)
+        )
+        assertEquals(2, count("integration_inventory_measure_selection_retirement"))
+        assertFailsWith<SQLException> {
+            execute("DELETE FROM integration_inventory_measure_selection")
+        }
+    }
+
+    @Test
+    fun `selected measure never falls back when current acceptance omits it`() {
+        val scope = activeConnection()
+        seedLedger(scope, "missing-item", "EA", "4", "5", null, null)
+        val mappings = mappingService()
+        val item = mappings.createItem(scope.first).second
+        val unit = mappings.createUnit(scope.first).second
+        val selector = selector(scope.second, "missing-item", "EA")
+        mappings.activateInitial(
+            scope.first, selector,
+            InventoryMappingTarget(item, null, unit, QuantityFactor.of(1, 1)),
+            InventoryMappingEvidence(scope.second, inputProgressVersion = 0, recordOrdinal = 0),
+            InventoryMappingPrincipalReference.of("test-principal")
+        )
+        val root = mappings.history(scope.first, selector).single()
+        val observations = observationService()
+        val first = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observations.project(scope.first, pointer(scope.second, 0))
+        )
+        val acceptances = acceptanceService()
+        val accepted = assertIs<CanonicalInventoryAcceptanceResult.Accepted>(
+            acceptances.acceptInitial(
+                scope.first, root.id, first.observationId,
+                InventoryAcceptancePrincipalReference.of("test-principal")
+            )
+        )
+        val selections = selectionService()
+        assertIs<CanonicalInventoryMeasureSelectionResult.Selected>(
+            selections.selectInitial(
+                scope.first, root.id, CanonicalInventoryMeasure.ON_HAND,
+                InventoryMeasureSelectionPrincipalReference.of("test-principal")
+            )
+        )
+        seedLaterEvidence(scope, "missing-item", "EA", "7")
+        val second = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observations.project(scope.first, pointer(scope.second, 1))
+        )
+        assertIs<CanonicalInventoryAcceptanceResult.Accepted>(
+            acceptances.replace(
+                scope.first, root.id, accepted.acceptanceId, accepted.revision,
+                second.observationId, InventoryAcceptancePrincipalReference.of("test-principal"),
+                CanonicalInventoryAcceptanceReason.NEW_SOURCE_EVIDENCE
+            )
+        )
+        assertIs<CanonicalInventoryMeasureResolutionResult.MeasureUnavailable>(
+            selections.resolve(scope.first, root.id)
+        )
+    }
+
+    @Test
+    fun `competing measure replacements create one successor`() {
+        val scope = activeConnection()
+        seedLedger(scope, "selection-race", null, "3", "4", "1", null)
+        val mappings = mappingService()
+        val item = mappings.createItem(scope.first).second
+        val unit = mappings.createUnit(scope.first).second
+        val selector = selector(scope.second, "selection-race", null)
+        mappings.activateInitial(
+            scope.first, selector,
+            InventoryMappingTarget(item, null, unit, QuantityFactor.of(1, 1)),
+            InventoryMappingEvidence(scope.second, inputProgressVersion = 0, recordOrdinal = 0),
+            InventoryMappingPrincipalReference.of("test-principal")
+        )
+        val root = mappings.history(scope.first, selector).single()
+        val projected = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observationService().project(scope.first, pointer(scope.second))
+        )
+        acceptanceService().acceptInitial(
+            scope.first, root.id, projected.observationId,
+            InventoryAcceptancePrincipalReference.of("test-principal")
+        )
+        val initial = assertIs<CanonicalInventoryMeasureSelectionResult.Selected>(
+            selectionService().selectInitial(
+                scope.first, root.id, CanonicalInventoryMeasure.AVAILABLE_TO_SELL,
+                InventoryMeasureSelectionPrincipalReference.of("test-principal")
+            )
+        )
+        val executor = Executors.newFixedThreadPool(2)
+        try {
+            val results = executor.invokeAll(listOf(
+                Callable { selectionService().replace(
+                    scope.first, root.id, initial.selectionId, initial.revision,
+                    CanonicalInventoryMeasure.ON_HAND,
+                    InventoryMeasureSelectionPrincipalReference.of("test-principal"),
+                    CanonicalInventoryMeasureSelectionReason.OPERATOR_CORRECTION
+                ) },
+                Callable { selectionService().replace(
+                    scope.first, root.id, initial.selectionId, initial.revision,
+                    CanonicalInventoryMeasure.RESERVED,
+                    InventoryMeasureSelectionPrincipalReference.of("test-principal"),
+                    CanonicalInventoryMeasureSelectionReason.OPERATOR_CORRECTION
+                ) }
+            )).map { it.get() }
+            assertEquals(1, results.count { it is CanonicalInventoryMeasureSelectionResult.Selected })
+            assertEquals(1, results.count { it is CanonicalInventoryMeasureSelectionResult.Conflict })
+            assertEquals(2, selectionService().history(scope.first, root.id).size)
+        } finally { executor.shutdownNow() }
+    }
+
     private fun activeConnection(): Pair<OrganizationId, IntegrationConnectionId> {
         val organization = control.createOrganization()
         val connection = control.createConnection(
@@ -375,6 +544,12 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
         AcceptanceIdentifierFactory { CanonicalInventoryAcceptanceCorrelationId.of(uuid()) }
     )
 
+    private fun selectionService() = CanonicalInventoryMeasureSelectionService(
+        PostgresCanonicalInventoryMeasureSelectionRepository(configuration),
+        SelectionIdentifierFactory { CanonicalInventoryMeasureSelectionId.of(uuid()) },
+        SelectionIdentifierFactory { CanonicalInventoryMeasureSelectionCorrelationId.of(uuid()) }
+    )
+
     private fun selector(connectionId: IntegrationConnectionId, item: String, unit: String?) =
         InventorySourceSelector(
             connectionId, sourceItemReference = SourceItemReference.of(item),
@@ -393,7 +568,8 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
         available: String?,
         onHand: String?,
         reserved: String?,
-        pendingInbound: String?
+        pendingInbound: String?,
+        pendingOutbound: String? = null
     ) = connection().use { connection ->
         connection.autoCommit = false
         connection.prepareStatement(
@@ -415,14 +591,15 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
         connection.prepareStatement(
             "INSERT INTO integration_inventory_source_balance " +
                 "(organization_id,connection_id,capability,input_progress_version,record_ordinal," +
-                "source_item_ref,source_unit_code,available_to_sell,on_hand,reserved,pending_inbound) " +
-                "VALUES (?,?,?,0,0,?,?,?,?,?,?)"
+                "source_item_ref,source_unit_code,available_to_sell,on_hand,reserved,pending_inbound," +
+                "pending_outbound) VALUES (?,?,?,0,0,?,?,?,?,?,?,?)"
         ).use { statement ->
             statement.setObject(1, scope.first.value); statement.setObject(2, scope.second.value)
             statement.setString(3, "inventory.source-balance.read"); statement.setString(4, item)
             statement.setString(5, unit); statement.setBigDecimal(6, available?.toBigDecimal())
             statement.setBigDecimal(7, onHand?.toBigDecimal()); statement.setBigDecimal(8, reserved?.toBigDecimal())
-            statement.setBigDecimal(9, pendingInbound?.toBigDecimal()); statement.executeUpdate()
+            statement.setBigDecimal(9, pendingInbound?.toBigDecimal())
+            statement.setBigDecimal(10, pendingOutbound?.toBigDecimal()); statement.executeUpdate()
         }
         connection.commit()
     }
