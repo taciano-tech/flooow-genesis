@@ -46,22 +46,30 @@ class PostgresCanonicalInventoryCandidateSnapshotRepository(
         snapshotId: CanonicalInventoryCandidateSnapshotId
     ): CanonicalInventoryCandidateSnapshotReadResult = try {
         connection().use { connection ->
-            val header = readHeader(connection, organizationId, snapshotId)
-                ?: return CanonicalInventoryCandidateSnapshotReadResult.NotFound
-            val frozen = readFrozenMembers(connection, organizationId, snapshotId)
-            if (frozen.size != header.memberCount) {
-                return CanonicalInventoryCandidateSnapshotReadResult.IntegrityFailure
-            }
-            val members = frozen.map { member ->
-                readHistoricalMember(connection, header, member)
-                    ?: return CanonicalInventoryCandidateSnapshotReadResult.IntegrityFailure
-            }
-            CanonicalInventoryCandidateSnapshotReadResult.Found(
-                CanonicalInventoryCandidateSnapshotView(header, members)
-            )
+            find(connection, organizationId, snapshotId)
         }
     } catch (_: Exception) {
         CanonicalInventoryCandidateSnapshotReadResult.IntegrityFailure
+    }
+
+    internal fun find(
+        connection: Connection,
+        organizationId: OrganizationId,
+        snapshotId: CanonicalInventoryCandidateSnapshotId
+    ): CanonicalInventoryCandidateSnapshotReadResult {
+        val header = readHeader(connection, organizationId, snapshotId)
+            ?: return CanonicalInventoryCandidateSnapshotReadResult.NotFound
+        val frozen = readFrozenMembers(connection, organizationId, snapshotId)
+        if (frozen.size != header.memberCount) {
+            return CanonicalInventoryCandidateSnapshotReadResult.IntegrityFailure
+        }
+        val members = frozen.map { member ->
+            readHistoricalMember(connection, header, member)
+                ?: return CanonicalInventoryCandidateSnapshotReadResult.IntegrityFailure
+        }
+        return CanonicalInventoryCandidateSnapshotReadResult.Found(
+            CanonicalInventoryCandidateSnapshotView(header, members)
+        )
     }
 
     private fun capture(

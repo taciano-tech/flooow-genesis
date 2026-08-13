@@ -18,6 +18,7 @@ include(":applications:inventory-source-acceptance")
 include(":applications:inventory-measure-selection")
 include(":applications:inventory-candidate-snapshot")
 include(":applications:inventory-candidate-comparison")
+include(":applications:inventory-candidate-adjudication")
 include(":research:experiments:exp-0003-harness")
 
 project(":platform:foundation:kernel").projectDir =
@@ -61,6 +62,9 @@ project(":applications:inventory-candidate-snapshot").projectDir =
 
 project(":applications:inventory-candidate-comparison").projectDir =
     file("applications/inventory-candidate-comparison")
+
+project(":applications:inventory-candidate-adjudication").projectDir =
+    file("applications/inventory-candidate-adjudication")
 
 project(":research:experiments:exp-0003-harness").projectDir =
     file("research/experiments/exp-0003-harness")
