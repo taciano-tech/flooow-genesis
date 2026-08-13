@@ -425,7 +425,7 @@ class PostgresMarketplaceFinancialLedgerRepositoryTest {
         val migrations = queryStrings(
             "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank"
         )
-        assertEquals("14", migrations.last())
+        assertEquals("014", migrations.last())
 
         val organization = createOrganization()
         val traceId = openedTrace(organization)
