@@ -16,6 +16,7 @@ include(":applications:inventory-identity-mapping")
 include(":applications:inventory-canonical-observation")
 include(":applications:inventory-source-acceptance")
 include(":applications:inventory-measure-selection")
+include(":applications:inventory-candidate-snapshot")
 include(":research:experiments:exp-0003-harness")
 
 project(":platform:foundation:kernel").projectDir =
@@ -53,6 +54,9 @@ project(":applications:inventory-source-acceptance").projectDir =
 
 project(":applications:inventory-measure-selection").projectDir =
     file("applications/inventory-measure-selection")
+
+project(":applications:inventory-candidate-snapshot").projectDir =
+    file("applications/inventory-candidate-snapshot")
 
 project(":research:experiments:exp-0003-harness").projectDir =
     file("research/experiments/exp-0003-harness")
