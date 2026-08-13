@@ -2,6 +2,8 @@ package io.flooow.marketplace.persistence.postgres
 
 import io.flooow.integration.control.*
 import io.flooow.integration.inventory.acceptance.*
+import io.flooow.integration.inventory.adjudication.*
+import io.flooow.integration.inventory.comparison.CanonicalInventoryCandidateComparisonResult
 import io.flooow.integration.inventory.mapping.*
 import io.flooow.integration.inventory.observation.*
 import io.flooow.integration.inventory.selection.*
@@ -692,6 +694,163 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
         } finally { executor.shutdownNow() }
     }
 
+    @Test
+    fun `candidate adjudication is explicit replayable immutable and reconstructs exact evidence`() {
+        val fixture = singleCandidateFixture("adjudication-item")
+        val service = adjudicationService()
+        val requestId = CanonicalInventoryCandidateAdjudicationRequestId.of(uuid())
+
+        assertIs<CanonicalInventoryCandidateAdjudicationWriteResult.ReasonMismatch>(
+            service.adjudicate(
+                fixture.organizationId, requestId, fixture.snapshotId, fixture.rootId,
+                CanonicalInventoryCandidateAdjudicationReason.EXACT_AGREEMENT_CONFIRMATION,
+                InventoryCandidateAdjudicationPrincipalReference.of("test-principal")
+            )
+        )
+        assertEquals(0, count("integration_inventory_candidate_adjudication"))
+        assertIs<CanonicalInventoryCandidateAdjudicationWriteResult.CandidateUnavailable>(
+            service.adjudicate(
+                fixture.organizationId, requestId, fixture.snapshotId,
+                InventoryMappingDecisionId.of(uuid()),
+                CanonicalInventoryCandidateAdjudicationReason.SINGLE_CANDIDATE_CONFIRMATION,
+                InventoryCandidateAdjudicationPrincipalReference.of("test-principal")
+            )
+        )
+
+        val created = assertIs<CanonicalInventoryCandidateAdjudicationWriteResult.Adjudicated>(
+            service.adjudicate(
+                fixture.organizationId, requestId, fixture.snapshotId, fixture.rootId,
+                CanonicalInventoryCandidateAdjudicationReason.SINGLE_CANDIDATE_CONFIRMATION,
+                InventoryCandidateAdjudicationPrincipalReference.of("test-principal")
+            )
+        )
+        val replay = assertIs<
+            CanonicalInventoryCandidateAdjudicationWriteResult.AlreadyAdjudicated
+        >(
+            service.adjudicate(
+                fixture.organizationId, requestId, fixture.snapshotId, fixture.rootId,
+                CanonicalInventoryCandidateAdjudicationReason.SINGLE_CANDIDATE_CONFIRMATION,
+                InventoryCandidateAdjudicationPrincipalReference.of("other-principal")
+            )
+        )
+        assertEquals(created.adjudicationId, replay.adjudicationId)
+        assertIs<CanonicalInventoryCandidateAdjudicationWriteResult.Conflict>(
+            service.adjudicate(
+                fixture.organizationId, requestId, fixture.snapshotId, fixture.rootId,
+                CanonicalInventoryCandidateAdjudicationReason.CONTROLLED_EXCEPTION,
+                InventoryCandidateAdjudicationPrincipalReference.of("test-principal")
+            )
+        )
+
+        val found = assertIs<CanonicalInventoryCandidateAdjudicationReadResult.Found>(
+            service.find(fixture.organizationId, created.adjudicationId)
+        ).adjudicatedCandidate
+        assertIs<CanonicalInventoryCandidateComparisonResult.SingleCandidate>(found.comparison)
+        assertEquals(fixture.rootId, found.chosenMember.lineageRootDecisionId)
+        assertEquals(BigInteger.valueOf(-5), found.chosenMember.exactQuantity.numeratorForPersistence())
+        assertEquals(6, found.chosenMember.exactQuantity.denominatorForPersistence())
+        assertFalse(columnExists("integration_inventory_candidate_adjudication", "quantity"))
+        assertFalse(columnExists("integration_inventory_candidate_adjudication", "measure"))
+        assertFailsWith<SQLException> {
+            execute("UPDATE integration_inventory_candidate_adjudication SET reason='CONTROLLED_EXCEPTION'")
+        }
+        assertFailsWith<SQLException> {
+            execute("DELETE FROM integration_inventory_candidate_adjudication")
+        }
+
+        val secondSnapshot = assertIs<CanonicalInventoryCandidateSnapshotCaptureResult.Captured>(
+            snapshotService().capture(
+                fixture.organizationId, CanonicalInventoryCandidateSnapshotRequestId.of(uuid()),
+                fixture.target, listOf(fixture.rootId),
+                InventoryCandidateSnapshotPrincipalReference.of("test-principal")
+            )
+        )
+        control.suspendOrganization(fixture.organizationId)
+        assertIs<CanonicalInventoryCandidateAdjudicationReadResult.Found>(
+            service.find(fixture.organizationId, created.adjudicationId)
+        )
+        assertIs<CanonicalInventoryCandidateAdjudicationWriteResult.AlreadyAdjudicated>(
+            service.adjudicate(
+                fixture.organizationId, requestId, fixture.snapshotId, fixture.rootId,
+                CanonicalInventoryCandidateAdjudicationReason.SINGLE_CANDIDATE_CONFIRMATION,
+                InventoryCandidateAdjudicationPrincipalReference.of("test-principal")
+            )
+        )
+        assertIs<CanonicalInventoryCandidateAdjudicationWriteResult.SnapshotUnavailable>(
+            service.adjudicate(
+                fixture.organizationId,
+                CanonicalInventoryCandidateAdjudicationRequestId.of(uuid()),
+                secondSnapshot.snapshotId,
+                fixture.rootId,
+                CanonicalInventoryCandidateAdjudicationReason.SINGLE_CANDIDATE_CONFIRMATION,
+                InventoryCandidateAdjudicationPrincipalReference.of("test-principal")
+            )
+        )
+    }
+
+    @Test
+    fun `concurrent identical adjudication creates one immutable decision`() {
+        val fixture = singleCandidateFixture("adjudication-race")
+        val requestId = CanonicalInventoryCandidateAdjudicationRequestId.of(uuid())
+        val executor = Executors.newFixedThreadPool(2)
+        try {
+            val results = executor.invokeAll(List(2) {
+                Callable {
+                    adjudicationService().adjudicate(
+                        fixture.organizationId, requestId, fixture.snapshotId, fixture.rootId,
+                        CanonicalInventoryCandidateAdjudicationReason.SINGLE_CANDIDATE_CONFIRMATION,
+                        InventoryCandidateAdjudicationPrincipalReference.of("test-principal")
+                    )
+                }
+            }).map { it.get() }
+            assertEquals(1, results.count {
+                it is CanonicalInventoryCandidateAdjudicationWriteResult.Adjudicated
+            })
+            assertEquals(1, results.count {
+                it is CanonicalInventoryCandidateAdjudicationWriteResult.AlreadyAdjudicated
+            })
+            assertEquals(1, count("integration_inventory_candidate_adjudication"))
+        } finally { executor.shutdownNow() }
+    }
+
+    private fun singleCandidateFixture(itemName: String): CandidateAdjudicationFixture {
+        val scope = activeConnection()
+        seedLedger(scope, itemName, "BOX", "4", "-2.5", "0", "6", "9")
+        val mappings = mappingService()
+        val item = mappings.createItem(scope.first).second
+        val unit = mappings.createUnit(scope.first).second
+        val selector = selector(scope.second, itemName, "BOX")
+        mappings.activateInitial(
+            scope.first, selector,
+            InventoryMappingTarget(item, null, unit, QuantityFactor.of(1, 3)),
+            InventoryMappingEvidence(scope.second, inputProgressVersion = 0, recordOrdinal = 0),
+            InventoryMappingPrincipalReference.of("test-principal")
+        )
+        val root = mappings.history(scope.first, selector).single()
+        val projected = assertIs<CanonicalInventoryProjectionResult.Projected>(
+            observationService().project(scope.first, pointer(scope.second))
+        )
+        acceptanceService().acceptInitial(
+            scope.first, root.id, projected.observationId,
+            InventoryAcceptancePrincipalReference.of("test-principal")
+        )
+        selectionService().selectInitial(
+            scope.first, root.id, CanonicalInventoryMeasure.ON_HAND,
+            InventoryMeasureSelectionPrincipalReference.of("test-principal")
+        )
+        val captured = assertIs<CanonicalInventoryCandidateSnapshotCaptureResult.Captured>(
+            snapshotService().capture(
+                scope.first, CanonicalInventoryCandidateSnapshotRequestId.of(uuid()),
+                CanonicalInventoryCandidateTarget(item, null, unit), listOf(root.id),
+                InventoryCandidateSnapshotPrincipalReference.of("test-principal")
+            )
+        )
+        return CandidateAdjudicationFixture(
+            scope.first, root.id, CanonicalInventoryCandidateTarget(item, null, unit),
+            captured.snapshotId
+        )
+    }
+
     private fun activeConnection(): Pair<OrganizationId, IntegrationConnectionId> {
         val organization = control.createOrganization()
         val connection = control.createConnection(
@@ -736,6 +895,16 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
         },
         CandidateSnapshotIdentifierFactory {
             CanonicalInventoryCandidateSnapshotCorrelationId.of(uuid())
+        }
+    )
+
+    private fun adjudicationService() = CanonicalInventoryCandidateAdjudicationService(
+        PostgresCanonicalInventoryCandidateAdjudicationRepository(configuration),
+        CandidateAdjudicationIdentifierFactory {
+            CanonicalInventoryCandidateAdjudicationId.of(uuid())
+        },
+        CandidateAdjudicationIdentifierFactory {
+            CanonicalInventoryCandidateAdjudicationCorrelationId.of(uuid())
         }
     )
 
@@ -862,6 +1031,13 @@ class PostgresCanonicalInventoryObservationRepositoryTest {
     )
 
     private fun uuid(): UUID = UUID(77, sequence.getAndIncrement())
+
+    private data class CandidateAdjudicationFixture(
+        val organizationId: OrganizationId,
+        val rootId: InventoryMappingDecisionId,
+        val target: CanonicalInventoryCandidateTarget,
+        val snapshotId: CanonicalInventoryCandidateSnapshotId
+    )
 }
 
 private class TestObservationVault : SecretVault {
