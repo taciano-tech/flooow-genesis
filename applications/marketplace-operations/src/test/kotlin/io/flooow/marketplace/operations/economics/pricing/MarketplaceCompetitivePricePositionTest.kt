@@ -312,6 +312,7 @@ class MarketplaceCompetitivePricePositionTest {
             scenarioId,
             marketplace,
             brl,
+            PricingCostUnitKey("each"),
             money("0.01"),
             NetBackNormalizationPolicyVersion("meli-rules/1"),
             components,
