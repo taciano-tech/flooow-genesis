@@ -270,6 +270,64 @@ class MarketplaceCompetitiveMarketReferenceTest {
         }
     }
 
+    @Test
+    fun `reference position classifies below within boundaries and above exactly`() {
+        fun position(own: String, prices: List<String>): CompetitiveMarketReferencePositionAssessment {
+            val source = competitiveAssessment(prices.mapIndexed { index, price ->
+                observation(index + 1, "seller-${index + 1}", price)
+            }, ownPrice = own)
+            val reference = referenced(source)
+            return assertIs<CompetitiveMarketReferencePositionResult.Assessed>(
+                MarketplaceCompetitiveMarketReferencePosition.evaluate(source, reference)
+            ).assessment
+        }
+        val band = listOf("280.00", "300.00", "310.00", "320.00")
+        val below = position("299.90", band)
+        assertEquals(CompetitiveMarketReferencePosition.BELOW_REFERENCE_BAND, below.position)
+        assertEquals(money("-0.10"), below.gapToLowerReference)
+        assertEquals(money("-10.10"), below.gapToUpperReference)
+        assertEquals(CompetitiveMarketReferencePosition.WITHIN_REFERENCE_BAND,
+            position("300.00", band).position)
+        assertEquals(CompetitiveMarketReferencePosition.WITHIN_REFERENCE_BAND,
+            position("310.00", band).position)
+        val above = position("320.00", band)
+        assertEquals(CompetitiveMarketReferencePosition.ABOVE_REFERENCE_BAND, above.position)
+        assertEquals(money("20.00"), above.gapToLowerReference)
+        assertEquals(money("10.00"), above.gapToUpperReference)
+        val collapsed = position("300.00", listOf("280.00", "300.00", "300.00", "320.00"))
+        assertEquals(CompetitiveMarketReferencePosition.WITHIN_REFERENCE_BAND, collapsed.position)
+        assertEquals(money("0"), collapsed.gapToLowerReference)
+        assertEquals(money("0"), collapsed.gapToUpperReference)
+    }
+
+    @Test
+    fun `reference position fails closed for a reference from another cohort`() {
+        val source = competitiveAssessment(listOf(
+            observation(1, "seller-a", "280.00"), observation(2, "seller-b", "300.00")
+        ))
+        val otherReference = referenced(competitiveAssessment(listOf(
+            observation(3, "seller-c", "310.00"), observation(4, "seller-d", "320.00")
+        )))
+        assertEquals(CompetitiveMarketReferencePositionResult.SourceAssessmentMismatch,
+            MarketplaceCompetitiveMarketReferencePosition.evaluate(source, otherReference))
+        assertEquals("[REDACTED]",
+            CompetitiveMarketReferencePositionResult.SourceAssessmentMismatch.toString())
+    }
+
+    @Test
+    fun `reference position keeps source qualities separate`() {
+        val source = competitiveAssessment(listOf(
+            observation(1, "seller-a"), observation(2, "seller-b")
+        ), ownQuality = MarketplaceEconomicTruthQuality.ESTIMATED)
+        val assessment = assertIs<CompetitiveMarketReferencePositionResult.Assessed>(
+            MarketplaceCompetitiveMarketReferencePosition.evaluate(source, referenced(source))
+        ).assessment
+        assertEquals(MarketplaceEconomicTruthQuality.ESTIMATED, assessment.ownEconomicQuality)
+        assertEquals(EconomicEvidenceQuality.CONFIRMED, assessment.marketEvidenceQuality)
+        assertEquals(MarketplaceEconomicTruthQuality.ESTIMATED, assessment.quality)
+        assertEquals("[REDACTED]", assessment.toString())
+    }
+
     private fun referenced(
         observations: Collection<AvailableMatchedCompetitorPrice>,
         ownQuality: MarketplaceEconomicTruthQuality = MarketplaceEconomicTruthQuality.CONFIRMED
@@ -283,13 +341,14 @@ class MarketplaceCompetitiveMarketReferenceTest {
 
     private fun competitiveAssessment(
         observations: Collection<AvailableMatchedCompetitorPrice>,
-        ownQuality: MarketplaceEconomicTruthQuality = MarketplaceEconomicTruthQuality.CONFIRMED
+        ownQuality: MarketplaceEconomicTruthQuality = MarketplaceEconomicTruthQuality.CONFIRMED,
+        ownPrice: String = "299.90"
     ): CompetitivePricePositionAssessment {
         require(observations.isNotEmpty())
         val sorted = observations.sortedBy { it.observationId.value.toString() }
         val lowest = sorted.minBy { it.grossPrice.amount }.grossPrice
         val lowestIds = sorted.filter { it.grossPrice == lowest }.map { it.observationId }
-        val ownPrice = money("299.90")
+        val ownPrice = money(ownPrice)
         val combinedQuality = if (
             ownQuality == MarketplaceEconomicTruthQuality.CONFIRMED &&
             sorted.all {
