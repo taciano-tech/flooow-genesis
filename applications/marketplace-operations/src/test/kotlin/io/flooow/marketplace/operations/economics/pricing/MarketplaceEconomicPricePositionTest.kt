@@ -197,7 +197,8 @@ class MarketplaceEconomicPricePositionTest {
                 else EconomicComponentCoverage.NOT_APPLICABLE
             }
         val profile = NetBackPricingProfile(
-            organizationId, scenarioId, MarketplaceKey("mercado-livre"), brl, money("0.01"),
+            organizationId, scenarioId, MarketplaceKey("mercado-livre"), brl,
+            PricingCostUnitKey("each"), money("0.01"),
             NetBackNormalizationPolicyVersion("meli-rules/1"), components, coverage,
             NetBackContributionTarget.AbsoluteAmount(money(target))
         )

@@ -28,6 +28,7 @@ class MarketplaceNetBackEconomicFloorTest {
     private val organizationId = OrganizationId.parse("10000000-0000-0000-0000-000000000001")
     private val scenarioId = NetBackPricingScenarioId.parse("20000000-0000-0000-0000-000000000001")
     private val brl = MarketplaceCurrency("BRL")
+    private val each = PricingCostUnitKey("each")
 
     @Test
     fun `compiled pricing boundary contains no Kernel reference`() {
@@ -117,6 +118,31 @@ class MarketplaceNetBackEconomicFloorTest {
     }
 
     @Test
+    fun `normalized commercial unit is explicit identity and propagates through every result`() {
+        val component = fixed(1, EconomicComponentType.PRODUCT_COST, "10")
+        val eachProfile = profile(listOf(component))
+        val caseProfile = profile(listOf(component), unitKey = PricingCostUnitKey("case-12"))
+        assertEquals(each, eachProfile.unitKey)
+        assertNotEquals(eachProfile, caseProfile)
+        assertEquals(each, complete(eachProfile).unitKey)
+
+        val incompleteCoverage = coverageFor(listOf(component)).also {
+            it[EconomicComponentType.PRODUCT_COST] = EconomicComponentCoverage.PARTIAL
+        }
+        val incomplete = assertIs<NetBackCalculationResult.Incomplete>(
+            MarketplaceNetBackEconomicFloor.calculate(profile(listOf(component), incompleteCoverage))
+        )
+        assertEquals(each, incomplete.unitKey)
+
+        val unachievable = assertIs<NetBackCalculationResult.Unachievable>(
+            MarketplaceNetBackEconomicFloor.calculate(
+                profile(listOf(rate(2, EconomicComponentType.MARKETPLACE_COMMISSION, "1")))
+            )
+        )
+        assertEquals(each, unachievable.unitKey)
+    }
+
+    @Test
     fun `incomplete coverage exposes no floor`() {
         val component = fixed(1, EconomicComponentType.PRODUCT_COST, "10")
         val coverage = coverageFor(listOf(component)).also {
@@ -129,6 +155,7 @@ class MarketplaceNetBackEconomicFloorTest {
         assertEquals(listOf(EconomicComponentType.TAX), result.missingTypes)
         assertEquals(listOf(EconomicComponentType.PRODUCT_COST), result.partialTypes)
         assertEquals(listOf(component), result.suppliedComponents)
+        assertEquals(each, result.unitKey)
     }
 
     @Test
@@ -151,6 +178,7 @@ class MarketplaceNetBackEconomicFloorTest {
         assertEquals(money("299.90"), floor.economicFloor)
         assertEquals(NetBackSignedRate(java.math.BigDecimal.ZERO), floor.netVariableDeductionRate)
         assertEquals(MarketplaceEconomicTruthQuality.CONFIRMED, floor.truthQuality)
+        assertEquals(each, floor.unitKey)
     }
 
     @Test
@@ -257,7 +285,7 @@ class MarketplaceNetBackEconomicFloorTest {
             result.toString(), complete.floor.toString(), complete.floor.netFixedCost.toString(),
             NetBackCalculationResult.Unachievable(
                 NetBackUnachievableReason.FLOOR_OUT_OF_RANGE,
-                normalizationVersion(), MarketplaceNetBackEconomicFloor.POLICY_VERSION
+                each, normalizationVersion(), MarketplaceNetBackEconomicFloor.POLICY_VERSION
             ).toString()
         )
         assertEquals(List(renderings.size) { "[REDACTED]" }, renderings)
@@ -273,9 +301,10 @@ class MarketplaceNetBackEconomicFloorTest {
         components: Collection<NetBackCostComponent>,
         coverage: Map<EconomicComponentType, EconomicComponentCoverage> = coverageFor(components),
         quantum: MarketplaceMoney = money("0.01"),
-        target: NetBackContributionTarget = NetBackContributionTarget.AbsoluteAmount(money("0"))
+        target: NetBackContributionTarget = NetBackContributionTarget.AbsoluteAmount(money("0")),
+        unitKey: PricingCostUnitKey = each
     ) = NetBackPricingProfile(
-        organizationId, scenarioId, MarketplaceKey("mercado-livre"), brl, quantum,
+        organizationId, scenarioId, MarketplaceKey("mercado-livre"), brl, unitKey, quantum,
         normalizationVersion(), components, coverage, target
     )
 

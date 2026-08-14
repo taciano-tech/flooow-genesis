@@ -158,6 +158,7 @@ class NetBackPricingProfile(
     val scenarioId: NetBackPricingScenarioId,
     val marketplace: MarketplaceKey,
     val currency: MarketplaceCurrency,
+    val unitKey: PricingCostUnitKey,
     val priceQuantum: MarketplaceMoney,
     val normalizationPolicyVersion: NetBackNormalizationPolicyVersion,
     components: Collection<NetBackCostComponent>,
@@ -197,7 +198,8 @@ class NetBackPricingProfile(
     override fun equals(other: Any?): Boolean =
         other is NetBackPricingProfile && organizationId == other.organizationId &&
             scenarioId == other.scenarioId && marketplace == other.marketplace &&
-            currency == other.currency && priceQuantum == other.priceQuantum &&
+            currency == other.currency && unitKey == other.unitKey &&
+            priceQuantum == other.priceQuantum &&
             normalizationPolicyVersion == other.normalizationPolicyVersion &&
             components == other.components && coverage == other.coverage && target == other.target
 
@@ -206,6 +208,7 @@ class NetBackPricingProfile(
         result = 31 * result + scenarioId.hashCode()
         result = 31 * result + marketplace.hashCode()
         result = 31 * result + currency.hashCode()
+        result = 31 * result + unitKey.hashCode()
         result = 31 * result + priceQuantum.hashCode()
         result = 31 * result + normalizationPolicyVersion.hashCode()
         result = 31 * result + components.hashCode()
@@ -277,6 +280,7 @@ sealed interface NetBackCalculationResult {
         val missingTypes: List<EconomicComponentType>,
         val partialTypes: List<EconomicComponentType>,
         val suppliedComponents: List<NetBackCostComponent>,
+        val unitKey: PricingCostUnitKey,
         val normalizationPolicyVersion: NetBackNormalizationPolicyVersion,
         val calculationPolicyVersion: NetBackCalculationPolicyVersion
     ) : NetBackCalculationResult {
@@ -285,6 +289,7 @@ sealed interface NetBackCalculationResult {
     @ConsistentCopyVisibility
     data class Unachievable internal constructor(
         val reason: NetBackUnachievableReason,
+        val unitKey: PricingCostUnitKey,
         val normalizationPolicyVersion: NetBackNormalizationPolicyVersion,
         val calculationPolicyVersion: NetBackCalculationPolicyVersion
     ) : NetBackCalculationResult {
@@ -298,6 +303,7 @@ data class NetBackEconomicFloor internal constructor(
     val scenarioId: NetBackPricingScenarioId,
     val marketplace: MarketplaceKey,
     val currency: MarketplaceCurrency,
+    val unitKey: PricingCostUnitKey,
     val priceQuantum: MarketplaceMoney,
     val normalizationPolicyVersion: NetBackNormalizationPolicyVersion,
     val calculationPolicyVersion: NetBackCalculationPolicyVersion,
@@ -330,7 +336,7 @@ object MarketplaceNetBackEconomicFloor {
         if (missing.isNotEmpty() || partial.isNotEmpty()) {
             return NetBackCalculationResult.Incomplete(
                 missing, partial, profile.components,
-                profile.normalizationPolicyVersion, POLICY_VERSION
+                profile.unitKey, profile.normalizationPolicyVersion, POLICY_VERSION
             )
         }
 
@@ -362,7 +368,7 @@ object MarketplaceNetBackEconomicFloor {
         return NetBackCalculationResult.Complete(
             NetBackEconomicFloor(
                 profile.organizationId, profile.scenarioId, profile.marketplace, profile.currency,
-                profile.priceQuantum, profile.normalizationPolicyVersion, POLICY_VERSION,
+                profile.unitKey, profile.priceQuantum, profile.normalizationPolicyVersion, POLICY_VERSION,
                 profile.target, MarketplaceMoney.calculated(profile.currency, fixed),
                 NetBackSignedRate(variableRate), absoluteFloor, economicFloor,
                 if (profile.components.any { it.evidenceQuality == EconomicEvidenceQuality.ESTIMATED }) {
@@ -397,7 +403,9 @@ object MarketplaceNetBackEconomicFloor {
     }
 
     private fun unachievable(profile: NetBackPricingProfile, reason: NetBackUnachievableReason) =
-        NetBackCalculationResult.Unachievable(reason, profile.normalizationPolicyVersion, POLICY_VERSION)
+        NetBackCalculationResult.Unachievable(
+            reason, profile.unitKey, profile.normalizationPolicyVersion, POLICY_VERSION
+        )
 }
 
 private fun isMoneyRepresentable(value: BigDecimal): Boolean =
