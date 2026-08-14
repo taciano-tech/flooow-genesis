@@ -66,6 +66,7 @@ data class EconomicPricePositionAssessment internal constructor(
     val observationId: EconomicPriceObservationId,
     val marketplace: MarketplaceKey,
     val currency: MarketplaceCurrency,
+    val priceQuantum: MarketplaceMoney,
     val observedGrossPrice: MarketplaceMoney,
     val absoluteFloor: MarketplaceMoney,
     val economicFloor: MarketplaceMoney,
@@ -88,6 +89,14 @@ data class EconomicPricePositionAssessment internal constructor(
                 economicFloorGap
             ).all { it.currency == currency }
         ) { "Economic price position currencies must match" }
+        require(priceQuantum.currency == currency && priceQuantum.amount.signum() > 0) {
+            "Economic price position quantum must be positive and use assessment currency"
+        }
+        require(
+            listOf(observedGrossPrice, absoluteFloor, economicFloor).all {
+                it.amount.remainder(priceQuantum.amount).signum() == 0
+            }
+        ) { "Economic price position prices must align to assessment quantum" }
         require(economicFloor.amount >= absoluteFloor.amount) {
             "Economic price floor must not be below absolute floor"
         }
@@ -150,6 +159,7 @@ object MarketplaceEconomicPricePosition {
                 observationId = observation.id,
                 marketplace = floor.marketplace,
                 currency = floor.currency,
+                priceQuantum = floor.priceQuantum,
                 observedGrossPrice = observation.grossPrice,
                 absoluteFloor = floor.absoluteFloor,
                 economicFloor = floor.economicFloor,
