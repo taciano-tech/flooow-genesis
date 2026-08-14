@@ -4,6 +4,8 @@ Status: Approved target direction
 
 Recorded: 2026-08-14
 
+Capability enrichment recorded: 2026-08-14 (TASK-0115)
+
 ## Nature of this document
 
 This document is a permanent target operating model for Flooow Marketplace
@@ -98,6 +100,203 @@ and decision deadlines.
 The operating model must progress from explaining what happened, to estimating
 what is likely, to identifying what the organization should begin before the
 event occurs.
+
+## Capability enrichment registry
+
+This registry enriches the leadership domains above. It is not an alternative
+roadmap, implementation sequence, service decomposition, or authorization to
+create domain types. Repository reality remains authoritative for when each
+capability becomes eligible.
+
+Before any item below becomes an ADR, specification, task, module, agent, or
+automation, the latest `main`, merged PRs, accepted decisions, specifications,
+evidence, implementations, and tests must be inspected. Existing terminology
+and boundaries are extended rather than duplicated.
+
+### Retail Media and profitable growth
+
+Growth and Retail Media must progress from isolated advertising metrics to
+economic allocation. Target evidence includes:
+
+- ROAS, ACoS, TACoS, CPC, CTR, conversion, paid sales, organic sales, and the
+  paid/organic mix;
+- Contribution Before Ads, Contribution After Ads, Incremental Contribution,
+  Marginal ROAS, Marginal Contribution, Ad Waste, and budget efficiency;
+- average performance kept distinct from the economic performance of the next
+  unit of spend;
+- inventory-, margin-, promotion-, supply-, and price-aware media context;
+- paid-to-organic observations and experiment context without assuming
+  causality from event order;
+- marketplace search terms as structured analytical evidence, including
+  generic, product, brand, competitor, long-tail, compatibility, and regional
+  terms;
+- governed Brand Defense and Conquesting hypotheses where channel policy
+  permits them.
+
+Traffic and ROAS are not final objectives. The long-term allocation question
+is where the next monetary unit of media spend produces the strongest
+incremental economic contribution. Marginal optimization is ineligible until
+reliable historical and experimental evidence exists.
+
+Advertising must not buy demand that the organization cannot fulfill safely.
+Critical inventory, delayed replenishment, poor unit economics, elevated
+returns, or organic cannibalization can invalidate an otherwise positive media
+metric. Conversely, healthy margin, excess inventory, reliable demand, and
+positive incrementality can support increased investment.
+
+### Digital Shelf, Catalog, and compatibility
+
+Commerce Operations and Digital Shelf should eventually observe listing
+availability and suppression, price, delivery promise, fulfillment, title,
+attributes, images, descriptions, technical content, compatibility, reviews,
+ratings, visibility, offer competitiveness, catalog conflicts, and
+unauthorized sellers where applicable.
+
+Catalog content becomes structured evidence rather than undifferentiated
+listing text. Target concerns include missing or contradictory attributes,
+duplicates, categorization, technical specifications, claims, imagery, and
+content completeness.
+
+Fitment and compatibility are strategically material for technical products
+and must not remain only free text. Future evidence may relate a product to
+make, model, year, variant, and technical constraints. This evidence can later
+support listing generation, search, pre-sale guidance, product matching,
+return prevention, and customer support. Motorcycle parts are examples, not
+Kernel vocabulary.
+
+Returns must eventually feed Catalog Intelligence through an evidence-based
+loop:
+
+```text
+return evidence -> investigated cause -> proposed catalog/content change
+  -> expected outcome -> actual outcome -> learning
+```
+
+A customer-stated return reason is evidence, not automatically the proven root
+cause. Investigation provenance must remain intact.
+
+Controlled content experiments may compare title, hero image, technical or
+compatibility imagery, video, descriptions, and enhanced content. They retain
+hypothesis, baseline, intervention, duration, evidence, and outcome. Higher
+CTR is not success when contribution, returns, customer quality, or media cost
+deteriorates.
+
+Marketplace Policy and Listing Compliance Intelligence remains governed by
+the separate protected roadmap item in
+`docs/roadmap/MARKETPLACE-POLICY-AND-LISTING-COMPLIANCE-INTELLIGENCE.md`.
+This enrichment does not duplicate or accelerate that capability.
+
+### Product launch and channel intelligence
+
+A future product launch context may retain target channel, price and economic
+floor, contribution objective, initial inventory, media budget, search terms,
+listing and compatibility readiness, promotion plan, experiment window,
+review checkpoints, and explicit scale and stop criteria.
+
+Launch performance compares expected and actual units, revenue, reconciled
+economics, media, TACoS, Contribution After Ads, returns, and inventory
+consumption. Sales volume alone does not establish launch success. Any launch
+state model requires a later bounded contract consistent with repository
+conventions.
+
+Marketplace Intelligence is channel-neutral at its economic boundaries and
+channel-specific at adapters and evidence acquisition. Mercado Livre, Amazon,
+Shopee, future marketplaces, and owned commerce may differ in Ads, ranking,
+promotions, fulfillment, fees, catalog rules, APIs, and customer behavior.
+Channel-specific semantics do not leak into shared truth without proof.
+
+Future Channel Allocation Intelligence may ask where a limited available unit
+is expected to produce the best economic outcome, considering contribution,
+demand, conversion, media, logistics, fees, stockout risk, strategic channel
+importance, and fulfillment. Equal distribution is not an assumed policy.
+
+Cross-channel observations may generate hypotheses. A successful listing,
+search, pricing, or media pattern in one channel is never automatically truth
+for another.
+
+### Opportunity, sourcing, import, and expansion
+
+Product Expansion Radar belongs to Foresight and Product Opportunity. Candidate
+evidence may include search growth, sales trend, seasonality, competitors,
+supply-demand gaps, price stability, margin potential, return risk, sourcing,
+lead time, and capital requirement.
+
+The target lifecycle connects, without collapsing distinct domains:
+
+```text
+opportunity -> market validation -> sourcing -> FOB/MOQ
+  -> import and landed-cost simulation -> replacement cost
+  -> contribution and capital analysis -> lead-time fit
+  -> governed decision -> purchase/import -> launch
+  -> actual reconciled outcome -> learning
+```
+
+GO, NEGOTIATE, WAIT, or NO-GO remain decision outputs subject to evidence,
+policy, and authority. No product-category example becomes a Genesis primitive.
+
+### Economic objective and coordinated strategy
+
+Optimization requires an explicit objective. Maximize contribution, maximize
+margin, grow volume, protect market share, preserve inventory, liquidate excess
+stock, improve capital return, support a launch, and defend a strategic channel
+can produce different valid actions from the same evidence.
+
+Specialists must not independently issue contradictory sovereign actions. A
+future Commerce Strategy coordinates pricing, media, promotion, inventory,
+competitor monitoring, and supply context with:
+
+```text
+objective
+actions by domain
+validity and trigger conditions
+expected economic impact
+required authority
+expiration and rollback
+```
+
+Commerce State supplies context to that process; it is not decision authority.
+
+### Leakage, opportunity, situations, and memory
+
+Economic Leakage is approved as a future view of money lost or exposed through
+pricing, fees and reversals, returns, media waste, stockouts, promotions,
+reconciliation, logistics, or catalog failures. Potential, prevented,
+recovered, and unresolved values remain distinct and cannot be calculated
+before their financial truth is reliable.
+
+Economic Opportunity is measurable potential upside across pricing, media,
+inventory, recovery, sourcing, promotion, product discovery, and channel
+allocation. It retains evidence and uncertainty and is not guaranteed revenue
+or profit.
+
+Management by Exception should transform high-volume events into economically
+prioritized Situations, low-confidence cases, policy violations, material
+opportunities, and authority requests. Correlated symptoms must be eligible for
+one Systemic Situation when a common rule, fee, channel, logistics model,
+category, or time boundary explains them. Alert volume is not value.
+
+Future Decision or Organizational Memory depends on retaining:
+
+```text
+situation -> evidence -> objective -> alternatives -> simulation
+  -> recommendation -> policy -> authority -> decision -> action
+  -> expected outcome -> actual outcome -> difference -> learning
+```
+
+The memory is not implemented prematurely, but present designs must not destroy
+the lineage required to build it later.
+
+### Evidence and claim discipline
+
+- correlation does not silently become causation;
+- marketplace algorithm behavior is observed and versioned, not treated as a
+  permanent law;
+- marketing claims such as guaranteed sales, rank, Buy Box, conversion, or
+  revenue are never encoded as truth;
+- predictions, hypotheses, and opportunities declare confidence and evidence
+  quality appropriate to their maturity;
+- AI may structure, explain, or propose, but cannot manufacture deterministic
+  economics or grant itself authority.
 
 ## Cross-domain target capabilities
 
@@ -231,3 +430,20 @@ At merge commit `f9d6960`, the repository already contains:
 The next technical contract remains derived from this state. The approved
 operating model does not move the repository backward or authorize a broad
 Commerce State, recommendation engine, cockpit, or agent implementation.
+
+## Repository checkpoint when enriched
+
+At merge commit `aee4ec0`, the repository additionally contains:
+
+- Competitive Market Reference and its controlled economic position;
+- three historized Product Cost Basis evidences and exact deltas;
+- explicit policy selection of one Product Cost Basis;
+- mandatory normalized unit identity throughout Net-Back outcomes;
+- immutable application of selected Product Cost evidence to a distinct
+  derived Net-Back scenario.
+
+The next technical boundary remains derived from this latest state. The
+smallest visible dependency is controlled calculation of the already-derived
+scenario before any baseline comparison, objective, recommendation, authority,
+or action. This capability enrichment changes neither that conclusion nor the
+accepted PR-by-PR method, and authorizes no implementation by itself.
