@@ -31,7 +31,9 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -542,8 +544,19 @@ class PostgresMarketplaceFinancialLedgerRepositoryTest {
 
     private fun <T> concurrent(first: () -> T, second: () -> T): List<T> {
         val executor = Executors.newFixedThreadPool(2)
+        val ready = CountDownLatch(2)
+        val start = CountDownLatch(1)
         return try {
-            executor.invokeAll(listOf(Callable(first), Callable(second))).map { it.get() }
+            val futures = listOf(first, second).map { operation ->
+                executor.submit(Callable {
+                    ready.countDown()
+                    check(start.await(10, TimeUnit.SECONDS))
+                    operation()
+                })
+            }
+            check(ready.await(10, TimeUnit.SECONDS))
+            start.countDown()
+            futures.map { it.get(30, TimeUnit.SECONDS) }
         } finally {
             executor.shutdownNow()
         }

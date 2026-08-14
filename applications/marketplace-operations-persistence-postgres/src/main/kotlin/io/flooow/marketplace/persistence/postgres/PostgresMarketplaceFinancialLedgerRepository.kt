@@ -144,7 +144,7 @@ class PostgresMarketplaceFinancialLedgerRepository(
         if (!lockActiveOrganization(connection, draft.organizationId)) {
             return FinancialLedgerAppendResult.OrganizationUnavailable
         }
-        val root = lockTrace(connection, draft.organizationId, draft.traceId)
+        val root = lockTraceForWrite(connection, draft.organizationId, draft.traceId)
             ?: return FinancialLedgerAppendResult.TraceUnavailable
         if (draft.magnitude.currency != root.currency) {
             return FinancialLedgerAppendResult.Conflict
@@ -388,13 +388,13 @@ class PostgresMarketplaceFinancialLedgerRepository(
         }
     }
 
-    private fun lockTrace(
+    private fun lockTraceForWrite(
         connection: Connection,
         organizationId: OrganizationId,
         traceId: FinancialTraceId
     ): StoredTraceRoot? = connection.prepareStatement(
         "SELECT * FROM marketplace_financial_trace " +
-            "WHERE organization_id=? AND trace_id=? FOR SHARE"
+            "WHERE organization_id=? AND trace_id=? FOR UPDATE"
     ).use { statement ->
         statement.setObject(1, organizationId.value)
         statement.setObject(2, traceId.valueForPersistence())
