@@ -89,10 +89,10 @@ accepted and selected evidence
 
 ## Authorization outcome
 
-Acceptance authorizes TASK-0132 only: implement the new pure
+Acceptance authorizes TASK-0133 only: implement the new pure
 `inventory-source-authority` module, policy and version values, exact assessor,
 controlled results, redaction, focused tests, and evidence defined by
 SPEC-0038.
 
-The next task must not expand into freshness, health, current-state selection,
+The implementation task must not expand into freshness, health, current-state selection,
 Inventory Confidence, Safe ATP, or inventory execution.

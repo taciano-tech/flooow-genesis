@@ -158,7 +158,7 @@ Kernel was rejected because it remains an integration-inventory concern.
 
 This ADR alone authorizes no implementation. SPEC-0038 may authorize only the
 pure source-authority policy, exact assessment, controlled mismatch results,
-redaction, and focused tests for TASK-0132.
+redaction, and focused tests for TASK-0133.
 
 No health, freshness, priority, score, reconciliation, current-state winner,
 aggregation, business availability, Inventory Confidence, Safe ATP,
