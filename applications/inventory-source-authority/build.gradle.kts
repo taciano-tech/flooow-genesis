@@ -6,8 +6,8 @@ dependencies {
     implementation(project(":platform:foundation:organization-context"))
     implementation(project(":applications:integration-control-plane"))
     implementation(project(":applications:inventory-identity-mapping"))
+    implementation(project(":applications:inventory-canonical-observation"))
     implementation(project(":applications:inventory-measure-selection"))
-    testImplementation(project(":applications:inventory-canonical-observation"))
     testImplementation(project(":applications:inventory-source-acceptance"))
     testImplementation(kotlin("test"))
 }
@@ -16,10 +16,10 @@ val acceptedProductionProjects = setOf(
     "organization-context",
     "integration-control-plane",
     "inventory-identity-mapping",
+    "inventory-canonical-observation",
     "inventory-measure-selection"
 )
 val acceptedTestProjects = setOf(
-    "inventory-canonical-observation",
     "inventory-source-acceptance"
 )
 
