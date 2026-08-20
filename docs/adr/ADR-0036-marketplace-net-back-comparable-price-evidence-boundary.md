@@ -102,9 +102,12 @@ The projection fails closed when:
 - either currency differs from its floor;
 - either gross price is not aligned to its floor quantum.
 
-Source and derived evaluator failures remain distinguishable so callers know
-which explicit evidence failed without receiving a partial assessment or any
-sensitive value.
+Source and derived ownership failures remain distinguishable so callers know
+which explicit scenario ownership failed without receiving a partial
+assessment or any sensitive value. Currency and price-quantum failures are
+shared because an accepted cost-basis application preserves both properties
+between source and derived floors, while same-fact observations preserve the
+same gross price.
 
 Failure precedence is deterministic: same-fact evidence is checked first,
 then source evaluation, then derived evaluation. No fallback, repair, rounding,
@@ -170,7 +173,7 @@ was rejected because this remains Marketplace pricing vocabulary.
 This ADR alone authorizes no implementation. SPEC-0036 may authorize only the
 pure comparable-price evidence projection, exact dual evaluator delegation,
 controlled result mapping, invariant retention, redaction, and focused tests
-for TASK-0127.
+for TASK-0128 after the TASK-0127 contract correction.
 
 No observation generation or rebinding, position-transition classification,
 percentage, materiality, preferred basis, recommendation, authority, action,
