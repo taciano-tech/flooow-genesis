@@ -15,7 +15,7 @@ preference, recommendation, decision, or action.
 
 ## Authorized next implementation
 
-Acceptance authorizes TASK-0127 only:
+Acceptance authorizes TASK-0128 only after the TASK-0127 contract correction:
 
 1. add one pure projection in the Marketplace pricing package;
 2. accept one complete `NetBackCostBasisFloorDelta`, one source-scenario
@@ -139,23 +139,26 @@ sealed interface NetBackComparablePriceEvidenceResult
 Assessed(evidence: NetBackComparablePriceEvidence)
 EvidenceMismatch
 SourceOwnershipMismatch
-SourceCurrencyMismatch
-SourcePriceQuantumMismatch
 DerivedOwnershipMismatch
-DerivedCurrencyMismatch
-DerivedPriceQuantumMismatch
+CurrencyMismatch
+PriceQuantumMismatch
 ```
 
 Mappings are exact:
 
 ```text
-source OwnershipMismatch    -> SourceOwnershipMismatch
-source CurrencyMismatch     -> SourceCurrencyMismatch
-source PriceQuantumMismatch -> SourcePriceQuantumMismatch
-derived OwnershipMismatch    -> DerivedOwnershipMismatch
-derived CurrencyMismatch     -> DerivedCurrencyMismatch
-derived PriceQuantumMismatch -> DerivedPriceQuantumMismatch
+source OwnershipMismatch   -> SourceOwnershipMismatch
+derived OwnershipMismatch  -> DerivedOwnershipMismatch
+either CurrencyMismatch    -> CurrencyMismatch
+either PriceQuantumMismatch -> PriceQuantumMismatch
 ```
+
+The accepted scenario application copies source currency and price quantum
+unchanged into the derived profile. The same-fact invariant requires both
+observations to retain the same gross price, including its currency. Therefore
+distinct source/derived currency and quantum failure types would describe
+states that no valid input can produce. The shared controlled failures preserve
+the exact diagnostic without creating unreachable public semantics.
 
 Every result renders `[REDACTED]`. Failures contain no partial assessment and
 disclose no organization, scenario, observation, price, currency, source, time,
@@ -163,7 +166,7 @@ floor, cost basis, or policy value.
 
 ## Existing semantics inherited unchanged
 
-TASK-0127 inherits from `MarketplaceEconomicPricePosition` without
+TASK-0128 inherits from `MarketplaceEconomicPricePosition` without
 modification:
 
 - organization and scenario ownership;
@@ -231,17 +234,17 @@ message or partial aggregate leaks values.
 
 ## Implementation scope
 
-TASK-0127 may add only:
+TASK-0128 may add only:
 
 - `MarketplaceNetBackComparablePriceEvidence.kt` in Marketplace pricing;
 - `MarketplaceNetBackComparablePriceEvidenceTest.kt`;
-- TASK-0127 evidence.
+- TASK-0128 evidence.
 
 No existing production type needs modification.
 
 ## Test plan
 
-TASK-0127 proves at least:
+TASK-0128 proves at least:
 
 1. projection bytecode references no Kernel type;
 2. public inputs are only complete floor delta and two observed prices;
@@ -252,19 +255,20 @@ TASK-0127 proves at least:
 7. output retains the same floor delta and observation instances;
 8. source and derived gaps, positions, policies, time, source, and quality remain
    exact;
-9. all source evaluator failures map one for one;
-10. all derived evaluator failures map one for one and return no partial source
+9. source and derived ownership failures remain distinguishable;
+10. shared currency and price-quantum failures map without unreachable
+    source/derived variants;
+11. a derived failure returns no partial source assessment;
+12. confirmed and estimated quality combinations remain evaluator-owned;
+13. internal construction rejects changed evidence or either mismatched
     assessment;
-11. confirmed and estimated quality combinations remain evaluator-owned;
-12. internal construction rejects changed evidence or either mismatched
-    assessment;
-13. value-equal inputs are deterministic and inputs remain unchanged;
-14. all new renderings are `[REDACTED]`;
-15. no transition classification, percentage, materiality, preferred basis,
+14. value-equal inputs are deterministic and inputs remain unchanged;
+15. all new renderings are `[REDACTED]`;
+16. no transition classification, percentage, materiality, preferred basis,
     recommendation, authority, or action is produced;
-16. no API, persistence, runtime, connector, event, or AI is added;
-17. no file under `platform/foundation/kernel` changes;
-18. `git diff --check` and complete repository build remain green.
+17. no API, persistence, runtime, connector, event, or AI is added;
+18. no file under `platform/foundation/kernel` changes;
+19. `git diff --check` and complete repository build remain green.
 
 ## Remaining boundary
 
@@ -276,6 +280,6 @@ allocation require later accepted specifications.
 
 ## Acceptance
 
-Merging ADR-0036 and SPEC-0036 authorizes TASK-0127 only. It changes no runtime
-behavior and authorizes no observation generation, recommendation, decision,
-action, AI, or Kernel modification.
+Merging the TASK-0127 correction to ADR-0036 and SPEC-0036 authorizes TASK-0128
+only. It changes no runtime behavior and authorizes no observation generation,
+recommendation, decision, action, AI, or Kernel modification.
