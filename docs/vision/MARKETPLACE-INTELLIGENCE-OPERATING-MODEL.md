@@ -6,6 +6,8 @@ Recorded: 2026-08-14
 
 Capability enrichment recorded: 2026-08-14 (TASK-0115)
 
+Trust and fulfillment direction recorded: 2026-08-20 (TASK-0124)
+
 ## Nature of this document
 
 This document is a permanent target operating model for Flooow Marketplace
@@ -82,6 +84,11 @@ conversion, and capital rotation.
 
 The long-term question is where the next unit of capital produces the best
 risk-adjusted economic return.
+
+Operational Truth, Inventory Confidence, Dynamic Available-to-Promise,
+Supplier Reliability, Seller Reputation Protection, Fiscal Orchestration, and
+safe fulfillment execution remain governed by the protected roadmap in
+`docs/roadmap/MARKETPLACE-TRUST-OPERATIONAL-FULFILLMENT.md`.
 
 ### Returns, Reconciliation, and Recovery
 
@@ -298,6 +305,20 @@ the lineage required to build it later.
 - AI may structure, explain, or propose, but cannot manufacture deterministic
   economics or grant itself authority.
 
+### Trust, operational truth, and fulfillment
+
+Future fulfillment execution requires measured operational trust rather than
+contractual assumption. Source-reported inventory remains evidence until
+accepted authority, freshness, current-state, reservations, unconfirmed
+demand, confidence, and versioned Safe ATP policy establish business
+availability.
+
+The Trust roadmap does not create a parallel epic sequence. Its protected
+decisions keep consignation subject to specialist approval, prohibit automatic
+cross-docking/fulfillment coercion from sales volume alone, and preserve
+Flooow's fiscal orchestration and eligibility authority when external tax
+providers are used.
+
 ## Cross-domain target capabilities
 
 The following concepts are approved as future capabilities, not immediate
@@ -447,3 +468,18 @@ smallest visible dependency is controlled calculation of the already-derived
 scenario before any baseline comparison, objective, recommendation, authority,
 or action. This capability enrichment changes neither that conclusion nor the
 accepted PR-by-PR method, and authorizes no implementation by itself.
+
+## Repository checkpoint for Trust direction
+
+At merge commit `59fae87`, Marketplace Pricing contains exact cost-basis floor
+deltas and an accepted contract for derived-scenario price position. The
+inventory path already contains typed source balances, exact canonical
+observations, acceptance, measure selection, candidate comparison, and explicit
+adjudication.
+
+Source authority/health/freshness, canonical current-state selection,
+operational reservations and unconfirmed demand, business availability,
+Inventory Confidence, and Safe ATP remain missing. The Trust direction is
+therefore recorded without interrupting Pricing or prematurely implementing
+the full vertical slice. The first inventory contract must be derived from the
+latest repository state when that roadmap becomes active.
