@@ -15,11 +15,11 @@ priority, current state, or business availability.
 
 ## Authorized next implementation
 
-Acceptance authorizes TASK-0132 only:
+Acceptance authorizes TASK-0133 only:
 
 1. add a pure `inventory-source-authority` application module;
-2. depend only on the existing measure-selection contract and its transitive
-   inventory evidence;
+2. declare only the direct type-owning project dependencies required by the
+   accepted `SelectedCanonicalInventoryMeasure` API;
 3. add immutable policy-version, policy, assessment, and controlled-result
    values;
 4. evaluate exact organization, connection, capability, target, measure, and
@@ -43,9 +43,31 @@ applications/inventory-source-authority
 io.flooow.integration.inventory.authority
 ```
 
-The module may depend on `applications:inventory-measure-selection`. It must
-not depend on Marketplace Operations, persistence, API, connectors, or the
-Kernel.
+The Kotlin/Gradle boundary does not export `implementation` dependencies of
+`inventory-measure-selection` onto a consumer compile classpath. Because the
+accepted candidate API publicly exposes organization, connection, mapping,
+observation, and acceptance types, the new module declares these explicit
+dependencies rather than weakening existing module encapsulation or relying
+on accidental transitivity.
+
+Authorized production dependencies are exactly:
+
+```text
+platform:foundation:organization-context
+applications:integration-control-plane
+applications:inventory-identity-mapping
+applications:inventory-measure-selection
+```
+
+Focused test fixtures may additionally depend on:
+
+```text
+applications:inventory-canonical-observation
+applications:inventory-source-acceptance
+```
+
+No dependency may target Marketplace Operations, persistence, API, connector
+runtime, or the Kernel. The build file must enforce this allow-list.
 
 ## Policy version
 
@@ -192,20 +214,21 @@ result.
 
 ## Implementation scope
 
-TASK-0132 may add only:
+TASK-0133 may add only:
 
 - the new module declaration and build file;
 - `CanonicalInventorySourceAuthority.kt` in the authority package;
 - `CanonicalInventorySourceAuthorityTest.kt`;
-- TASK-0132 evidence.
+- TASK-0133 evidence.
 
 No existing production type requires modification.
 
 ## Test plan
 
-TASK-0132 proves at least:
+TASK-0133 proves at least:
 
-1. the module depends only on accepted inventory contracts;
+1. the module build enforces the exact accepted production and test dependency
+   allow-list;
 2. production bytecode references no Kernel or Marketplace type;
 3. policy version normalization and byte bound;
 4. invalid capability and empty or inverted intervals fail construction;
@@ -238,6 +261,6 @@ to act, outcome, and learning require later accepted specifications.
 
 ## Acceptance
 
-Merging ADR-0038 and SPEC-0038 authorizes TASK-0132 only. It changes no runtime
+Merging ADR-0038 and SPEC-0038 authorizes TASK-0133 only. It changes no runtime
 behavior and authorizes no source winner, business-stock decision, external
 action, AI, or Kernel modification.
