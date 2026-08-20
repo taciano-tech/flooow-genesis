@@ -8,6 +8,8 @@ Capability enrichment recorded: 2026-08-14 (TASK-0115)
 
 Trust and fulfillment direction recorded: 2026-08-20 (TASK-0124)
 
+Trusted-commerce consolidation recorded: 2026-08-20 (TASK-0125)
+
 ## Nature of this document
 
 This document is a permanent target operating model for Flooow Marketplace
@@ -319,6 +321,31 @@ cross-docking/fulfillment coercion from sales volume alone, and preserve
 Flooow's fiscal orchestration and eligibility authority when external tax
 providers are used.
 
+Trusted Commerce distinguishes permission from occurrence. Fiscal Eligibility
+states what an approved, versioned policy permits; Fiscal Truth retains the
+documents and events that actually occurred. Economic Truth, Operational
+Truth, Marketplace Truth, and Financial Trace/Reconciled Truth remain separate
+evidence boundaries and do not become generic Kernel primitives by name.
+
+Financial settlement never defines commercial or fiscal reality. Participant
+payables, split, escrow, and settlement execution may be derived only after
+explained economic events, eligibility, documents, fulfillment evidence,
+marketplace settlement, and reconciliation. Future participant allocation must
+extend the accepted Financial Trace Ledger and Reconciliation rather than
+create a parallel ledger.
+
+Future distributed inventory keeps physical quantity, reservation, Safe ATP,
+Seller Entitlement, Channel ATP, and published inventory distinct. It also
+prefers atomic title, custody, inventory-recognition, risk-bearing, sale-right,
+reservation-holder, and fiscal-seller facts over one legally ambiguous
+`economicOwner` field.
+
+Shared cross-dock and dedicated marketplace fulfillment require separate
+operational, fiscal, marketplace, inventory, return, and reconciliation
+eligibility. Product fiscal profiles and policy applicability remain versioned
+evidence subject to qualified approval; no proposed CFOP, CST, NCM, venda a
+ordem, or consignation treatment is accepted as software truth by default.
+
 ## Cross-domain target capabilities
 
 The following concepts are approved as future capabilities, not immediate
@@ -483,3 +510,19 @@ Inventory Confidence, and Safe ATP remain missing. The Trust direction is
 therefore recorded without interrupting Pricing or prematurely implementing
 the full vertical slice. The first inventory contract must be derived from the
 latest repository state when that roadmap becomes active.
+
+## Repository checkpoint for Trusted Commerce consolidation
+
+At merge commit `54d1545`, the protected Trust roadmap already covered
+Operational Truth, Inventory Confidence, Safe ATP, graceful degradation,
+Supplier Reliability, Seller Reputation Protection, fiscal-provider
+sovereignty, sandbox execution, and OFI readiness. Financial Trace and
+Reconciliation already provide the immutable ledger foundation.
+
+The consolidation therefore adds only missing boundary clarity: Fiscal
+Eligibility versus Fiscal Truth, atomic ownership/custody/right/risk facts,
+Seller Entitlement after Safe ATP, participant allocation as an extension of
+the existing ledger, versioned fiscal-policy and product-profile direction,
+separate shared-cross-dock and dedicated-fulfillment eligibility, and a narrow
+exception-complete pilot. It creates neither a new roadmap nor an
+implementation authorization.

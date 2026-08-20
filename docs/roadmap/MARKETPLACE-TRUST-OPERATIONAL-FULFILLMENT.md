@@ -7,6 +7,8 @@ Recorded: 2026-08-20
 Source reviewed: Flooow Trust, Operational Truth & Fulfillment Orchestration
 Roadmap / Architecture Specification v1.1
 
+Trusted-commerce consolidation recorded: 2026-08-20 (TASK-0125)
+
 ## Purpose and authority
 
 This roadmap item records the target trust boundary required before Flooow can
@@ -25,8 +27,14 @@ authoritative. Accepted contracts must be extended rather than duplicated.
 - Marketplace trust, inventory, fiscal, supplier, logistics, seller, and
   fulfillment vocabulary remains outside the Kernel unless a separately
   validated universal primitive is accepted.
-- Economic Truth, Operational Truth, Fiscal Eligibility, and Marketplace
-  Eligibility remain distinct sources of evidence.
+- Economic Truth, Operational Truth, Fiscal Eligibility, Fiscal Truth,
+  Marketplace Eligibility, Marketplace Truth, and Financial Trace/Reconciled
+  Truth remain distinct boundaries. The word `Truth` does not make any of them
+  a generic Kernel primitive.
+- Eligibility records what approved policy permits. Truth records what
+  auditable evidence says occurred. Neither one silently implies the other.
+- Financial settlement, split, or payment direction never defines commercial,
+  operational, marketplace, or fiscal reality.
 - Facts, evidence, features, assessment, score, eligibility, recommendation,
   policy, authority, decision, action, outcome, and learning do not collapse
   into one type or agent.
@@ -50,6 +58,7 @@ Economic Truth
   -> Decision Intelligence
   -> Policy and Authority
   -> Trusted Execution
+  -> Fiscal Truth + Marketplace Truth + Financial Trace
   -> Reconciliation and Outcome
   -> Learning
 ```
@@ -57,6 +66,25 @@ Economic Truth
 `Operational Truth` is a target umbrella for auditable physical and
 operational state. It is not approved as one generic Kernel abstraction or one
 premature service. Concrete vertical evidence must demonstrate each contract.
+
+### Distinct truth and eligibility boundaries
+
+The target model separates permission from occurrence:
+
+```text
+Fiscal Policy
+  -> Fiscal Eligibility
+  -> Authorized Execution
+  -> Fiscal Documents and Events
+  -> Fiscal Truth
+```
+
+Economic Truth explains the deterministic economics of the commercial event.
+Operational Truth explains auditable physical and responsibility facts.
+Marketplace Truth records what the marketplace observed, charged, refunded,
+or reported. Financial Trace and Reconciliation explain expected versus actual
+money movement. Reconciled Truth is a qualified projection over those retained
+facts, never a replacement for their source evidence.
 
 ## Repository dependency assessment
 
@@ -95,6 +123,14 @@ availability, Operational Truth, Inventory Confidence, or Safe ATP.
 - order SLA, marketplace deadline, warehouse, carrier, and seller-impact
   evidence;
 - fiscal scenario/eligibility registry and specialist-approved policies;
+- atomic title, custody, inventory-recognition, risk-bearing, sale-right,
+  reservation-holder, and fiscal-seller evidence where the operating model
+  requires those distinctions;
+- allocation policy, Seller Entitlement, Channel ATP, and published-inventory
+  lineage after Safe ATP exists;
+- product fiscal profiles and versioned policy applicability evidence;
+- participant payable/allocation and settlement-grouping contracts extending
+  the accepted Financial Trace and Reconciliation capabilities;
 - a repository-versioned OFI v1.1 contract.
 
 The supplied Trust specification references OFI v1.1, but no OFI document or
@@ -145,6 +181,27 @@ Seller performance may be one later allocation feature, but it is never the
 sole allocator. Channel allocation must avoid an unexamined self-reinforcing
 monopoly and remain governed by explicit versioned policy.
 
+Physical quantity, source-reported reserved quantity, Safe ATP, Seller
+Entitlement, Channel ATP, and published quantity remain different facts or
+projections. The target dependency direction is:
+
+```text
+Physical Inventory
+  -> Operational Truth
+  -> Inventory Confidence
+  -> Safe ATP
+  -> Allocation Policy
+  -> Seller Entitlement
+  -> Channel ATP
+  -> Published Inventory
+```
+
+No single `economicOwner` field is accepted as sufficient legal or operational
+truth. Concrete models should retain the atomic facts needed by the applicable
+policy, including title/ownership status, custody, inventory-recognition
+party, risk-bearing party, sale-right holder, reservation holder, and fiscal
+seller. These facts may change at different events and times.
+
 ### Supplier Reliability
 
 Supplier Reliability is a future deterministic, decomposable assessment over
@@ -179,6 +236,38 @@ Brazilian fiscal logic must not become scattered application conditionals, but
 this roadmap does not authorize building a generic tax engine or choosing a
 vendor.
 
+A future Fiscal Policy Registry may qualify applicability by operation model,
+origin, seller and destination jurisdictions, product fiscal profile,
+fulfillment mode, and effective date. Candidate output includes `ELIGIBLE`,
+`CONDITIONAL`, `BLOCKED`, or `UNKNOWN`, required documents and evidence,
+provider reference, policy version, and reason codes.
+
+A future versioned Product Fiscal Profile may retain fiscal description, NCM,
+CEST where applicable, origin, composition, classification evidence,
+effective interval, approver, and policy version. No product classification,
+CFOP, CST, or tax treatment from a proposal becomes software truth without
+qualified specialist approval and applicable evidence.
+
+`SELLER_DIRECT_DELIVERY`, venda a ordem, consignation, dedicated stock,
+warehouse, and fulfillment are candidate operating/fiscal models, not inferred
+rules. In particular, shared cross-dock never automatically implies venda a
+ordem. An unresolved material scenario remains under specialist review and
+fails closed.
+
+### Financial allocation and settlement extension
+
+The accepted Financial Trace Ledger and Financial Reconciliation remain the
+single financial foundation. A future participant-allocation contract may add
+supplier, 3PL, Flooow, seller, tax, or other payable/receivable responsibility,
+allocation policy, settlement grouping, and lifecycle evidence such as
+reported, settled, disputed, and adjusted. It must extend existing immutable
+`EXPECTED` and `ACTUAL` evidence rather than create a second Settlement Ledger.
+
+Payables and split execution follow explained economic events, fiscal
+eligibility/documents, fulfillment evidence, marketplace settlement, and
+reconciliation. Receipt of a marketplace deposit alone never proves why money
+belongs to a participant.
+
 ### Responsibility and operational liability
 
 Future responsibility policy may relate event type, responsible party, seller
@@ -194,6 +283,19 @@ invoice rejection, inventory divergence, seller restriction, supplier
 failure, and marketplace/integration failure. The sandbox captures ownership,
 custody, inventory, fiscal, shipment, settlement, return, reconciliation,
 accounting, and outcome evidence.
+
+The first candidate pilot is deliberately narrow: one importer, one 3PL, one
+seller, one SKU, one marketplace, one operating mode, one origin/destination
+path, and one approved fiscal policy. Approval evidence must cover the happy
+path and cancellation before invoice, cancellation after invoice, return,
+damaged return, lost shipment, stock divergence, invoice rejection,
+marketplace refund, and financial reconciliation before scale increases.
+
+Operational evidence should be capable of retaining order received, pick
+started, packed, invoice authorized, ready for pickup, carrier handoff, and
+marketplace deadline times. These observations can later support Supplier
+Reliability and Seller Reputation Protection without prematurely creating an
+opaque score.
 
 ## Fulfillment opportunity and OFI integration
 
@@ -244,6 +346,10 @@ economic and operational evidence, eligibility, simulation, policy, and
 authority. A mandatory transition needs a separately approved safety,
 contractual, or operational policy.
 
+Shared cross-dock and dedicated marketplace fulfillment remain distinct
+operational, fiscal, marketplace-eligibility, inventory, return, and
+reconciliation workflows. Approval of one model never authorizes the other.
+
 ### External fiscal providers do not own decision intelligence
 
 Flooow may delegate specialized calculation through provider-neutral adapters,
@@ -265,16 +371,21 @@ Initial phases explicitly do not authorize:
 - an opaque ML reliability score;
 - an autonomous stock promise or listing mutation;
 - a generic Brazilian tax engine or vendor selection;
+- a specific CFOP, CST, NCM, tax treatment, or venda-a-ordem rule as assumed
+  truth;
 - consignation as the default fiscal model;
 - fulfillment coercion from sales volume;
+- real escrow, split, or participant payment execution before economic,
+  operational, fiscal, marketplace, and reconciliation prerequisites;
 - autonomous financial penalties;
 - a dashboard as proof of the domain contract.
 
 ## Current sequencing decision
 
 This roadmap is recorded now because it materially protects future execution.
-It does not interrupt the active deterministic Marketplace Pricing sequence at
-`59fae87` and authorizes no production code.
+The consolidation audit inspected `main` at `54d1545`. It does not interrupt
+the active deterministic Marketplace Pricing sequence and authorizes no
+production code.
 
 When the inventory roadmap is resumed, inspect the latest `main` and derive one
 small contract from the first missing dependency. Do not mechanically implement
