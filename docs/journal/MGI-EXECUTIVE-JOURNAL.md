@@ -109,6 +109,50 @@ contract and executable acceptance scenarios for:
 The task must remain pure: no live provider, persistence, UI, action, or Kernel
 change.
 
+## 2026-08-27 - TASK-0139 contract review
+
+### Repository state before
+
+- TASK-0138 merged through PR #133;
+- canonical main: `d5cbc9c`;
+- MGI v0.7.6 behavioral baseline and one convergence roadmap accepted;
+- no production MGI feature started in Genesis.
+
+### Decision
+
+Accepted ADR-0042 and SPEC-0041 for one pure independent marketplace economic
+evidence boundary. The contract reuses Genesis economics and makes accepted
+facts, empty/failed collection attempts, conflicts, and explicit corrections
+different domain events.
+
+### Changes prepared
+
+- exact evidence families and financial component mapping;
+- external identity observations for payment, ERP order, invoice, and
+  marketplace item-to-Ad-Group relationships;
+- authoritative-zero and missing-attempt semantics;
+- append-only evidence set and deterministic merge classification;
+- explicit correction/supersession with retained history;
+- provider-free MGI v0.7.6 acceptance scenarios;
+- narrow TASK-0140 implementation authorization.
+
+### Risk reduced
+
+A later missing, ambiguous, or failed refresh is no longer allowed to overwrite
+accepted financial or identity evidence. Ads identity is structurally unable to
+become Ads allocation inside this boundary.
+
+### Remaining risk
+
+The contract is not durable until a later persistence task. No live provider,
+projection, API, or operational screen exists yet. TASK-0137 inventory
+freshness remains deferred.
+
+### Next objective
+
+Implement TASK-0140 exactly as specified, prove the MGI scenarios and
+no-regression rules, then return to the durable ingestion dependency.
+
 ## Journal update template
 
 Each completed convergence task appends:
