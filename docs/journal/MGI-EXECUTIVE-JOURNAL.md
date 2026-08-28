@@ -153,6 +153,63 @@ freshness remains deferred.
 Implement TASK-0140 exactly as specified, prove the MGI scenarios and
 no-regression rules, then return to the durable ingestion dependency.
 
+## 2026-08-28 - TASK-0140 independent evidence implementation
+
+### Repository state before
+
+- TASK-0139 merged through PR #134;
+- canonical main: `8706c58`;
+- ADR-0042 and SPEC-0041 authorized one pure implementation task;
+- no production MGI feature or provider activation existed in Genesis.
+
+### Decision
+
+Implemented the independent marketplace economic evidence boundary as one
+immutable, provider-neutral aggregate inside `marketplace-operations`. Accepted
+facts, collection attempts, source conflicts, and explicit corrections remain
+different domain concepts. Existing Economic Truth, ledger, and reconciliation
+continue to own their respective meanings.
+
+### Changes prepared
+
+- organization/order/marketplace/currency subject isolation;
+- exact financial and nonfinancial identity observations;
+- authoritative-zero and missing-attempt separation;
+- deterministic idempotency and source-fact conflict classification;
+- explicit correction with preserved history and active replacement;
+- canonical ordering, microsecond precision, and redacted rendering;
+- 24 focused tests covering the 32 SPEC-0041 test-plan requirements;
+- TASK-0140 evidence report.
+
+### Tests and validation
+
+- focused evidence suite: 24 passed;
+- complete `marketplace-operations` suite: 231 passed;
+- full non-Postgres build: passed;
+- mechanical dependency, forbidden-reference, file-scope, and diff checks:
+  passed locally;
+- PR CI: pending.
+
+### Risk reduced
+
+Independently arriving shipping, product cost, invoice, tax, and Ads identity
+evidence can now progress without an ERP order gate. Later missing or failed
+attempts cannot erase accepted facts, and conflicting source facts cannot be
+silently replaced.
+
+### Remaining risk and roadmap impact
+
+The evidence set is not durable across process restarts and is not yet
+materialized into Economic Truth, ledger, reconciliation, or a fast read model.
+P0.2 still requires its own accepted architecture and specification. No P0.2,
+P0.3, provider, API, or UI work is authorized by this task.
+
+### Next objective
+
+After TASK-0140 passes PR review and CI, re-read canonical main and define the
+smallest architecture/specification increment for durable append-only evidence
+ingestion. Do not implement it as part of TASK-0140.
+
 ## Journal update template
 
 Each completed convergence task appends:
