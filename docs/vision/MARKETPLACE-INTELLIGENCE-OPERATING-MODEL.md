@@ -10,6 +10,9 @@ Trust and fulfillment direction recorded: 2026-08-20 (TASK-0124)
 
 Trusted-commerce consolidation recorded: 2026-08-20 (TASK-0125)
 
+Strategic benchmark and Commerce Network memory recorded: 2026-08-31
+(TASK-0141)
+
 ## Nature of this document
 
 This document is a permanent target operating model for Flooow Marketplace
@@ -22,6 +25,16 @@ approved vision never causes an older capability to be rebuilt.
 
 The seven leadership domains below are organizational lenses. They are not a
 mandate to create seven services, packages, agents, or autonomous executives.
+
+Applicable strategic benchmark and innovation-memory documents must be
+consulted before a material new epic, domain boundary, external integration,
+execution capability, or major roadmap change is accepted. Consultation does
+not grant implementation authority: external patterns must be classified,
+searched against current repository capabilities, and promoted only through an
+accepted ADR or specification.
+
+The permanent Commerce Network horizon is recorded in
+`docs/vision/FLOOOW-COMMERCE-NETWORK-STRATEGIC-HORIZON.md`.
 
 ## Invariants
 

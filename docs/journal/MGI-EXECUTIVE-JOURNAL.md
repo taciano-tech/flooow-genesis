@@ -188,7 +188,7 @@ continue to own their respective meanings.
 - full non-Postgres build: passed;
 - mechanical dependency, forbidden-reference, file-scope, and diff checks:
   passed locally;
-- PR CI: pending.
+- PR #135 CI: passed; merged as `e087548` on 2026-08-30.
 
 ### Risk reduced
 
@@ -209,6 +209,48 @@ P0.3, provider, API, or UI work is authorized by this task.
 After TASK-0140 passes PR review and CI, re-read canonical main and define the
 smallest architecture/specification increment for durable append-only evidence
 ingestion. Do not implement it as part of TASK-0140.
+
+## 2026-08-31 - TASK-0141 strategic benchmark memory
+
+### Repository state before
+
+- TASK-0140 merged through PR #135 as `e087548`;
+- the independent evidence boundary remained intentionally in memory only;
+- core Trusted Commerce direction already existed in the Operating Model and
+  Marketplace Trust roadmap;
+- richer competitor, external-expert, and Commerce Network hypotheses remained
+  outside GitHub in conversation and the local MGI strategic-horizon package.
+
+### Decision
+
+Preserve the unique strategic context as permanent innovation memory while
+keeping GitHub `main`, the Constitution, accepted ADRs, and accepted
+specifications sovereign. External success is useful evidence, not permission
+to copy thresholds, workflows, vendors, technology stacks, or architecture.
+
+### Changes prepared
+
+- permanent Flooow Commerce Network strategic horizon;
+- consultation and promotion rule for relevant future strategic decisions;
+- distributed-commerce thesis and participant model;
+- six candidate B2B, dropshipping, 3PL, allocation, and hybrid models;
+- seller, supplier, logistics, payment, fiscal, return, dispute, authority, and
+  network-effect hypotheses;
+- explicit boundary between Flooow policy orchestration and regulated custody;
+- TASK-0141 evidence and reconciliation record.
+
+### Scope protection
+
+No production code, module, dependency, API, schema, provider, score, payment,
+fiscal rule, automation, Kernel change, or future implementation was
+authorized. Existing Financial Trace, Reconciliation, inventory, connector,
+and MGI boundaries remain canonical and must be extended rather than rebuilt.
+
+### Next objective
+
+After PR validation and merge, inspect the latest `main` and derive the smallest
+accepted ADR/specification increment for P0.2 durable append-only independent
+economic evidence ingestion. Do not start P0.3, provider, API, or UI work.
 
 ## Journal update template
 
