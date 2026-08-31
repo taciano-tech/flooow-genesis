@@ -246,6 +246,12 @@ fiscal rule, automation, Kernel change, or future implementation was
 authorized. Existing Financial Trace, Reconciliation, inventory, connector,
 and MGI boundaries remain canonical and must be extended rather than rebuilt.
 
+### Tests and CI
+
+- Markdown whitespace and `git diff --check`: passed;
+- full local build excluding only Postgres/Testcontainers tests: passed;
+- PR #136 complete CI, including persistent runtime validation: passed.
+
 ### Next objective
 
 After PR validation and merge, inspect the latest `main` and derive the smallest

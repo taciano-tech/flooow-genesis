@@ -1,6 +1,6 @@
 # TASK-0141: Preserve Strategic Benchmark and Commerce Network Memory
 
-Status: Documentation prepared; PR validation pending
+Status: Completed through PR #136; CI passed
 
 Date: 2026-08-31
 
@@ -78,7 +78,9 @@ or implementation authorization. It does not change the P0.2 dependency.
 - duplicate Financial Ledger and settlement foundations explicitly rejected;
 - benchmark technologies remain non-prescriptive;
 - strategic status and promotion gates are explicit;
-- repository diff and Markdown consistency checks required before publication.
+- Markdown whitespace and `git diff --check`: passed;
+- full local build excluding only Postgres/Testcontainers tests: passed;
+- PR #136 complete CI, including persistent runtime validation: passed.
 
 ## Next objective
 
