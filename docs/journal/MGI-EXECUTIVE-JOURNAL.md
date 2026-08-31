@@ -258,6 +258,47 @@ After PR validation and merge, inspect the latest `main` and derive the smallest
 accepted ADR/specification increment for P0.2 durable append-only independent
 economic evidence ingestion. Do not start P0.3, provider, API, or UI work.
 
+## 2026-08-31 - TASK-0142 durable evidence contract
+
+### Repository state before
+
+- TASK-0141 merged through PR #136 as `a472f55`;
+- TASK-0140 independent evidence remained deterministic but process-local;
+- existing Postgres, organization, immutable Ledger, canonical observation,
+  concurrency, and transactional-outbox patterns were reusable;
+- no accepted durable evidence port, migration, adapter, or integration test
+  existed.
+
+### Decision
+
+Accepted ADR-0043 and SPEC-0042 for append-oriented relational evidence history,
+domain-merger replay, one optimistic subject version, duplicate-before-stale
+retry semantics, and one atomic outbox notification for each newly applied
+fact, attempt, or correction.
+
+The contract follows the existing Financial Ledger lifecycle boundary:
+historical reads and exact duplicate retry survive organization suspension,
+while new mutations fail closed. A narrow persistence encoding bridge in the
+application port avoids widening TASK-0140 domain constructors.
+
+### Scope protection
+
+TASK-0142 changes documentation only. It creates no database table, repository,
+runtime wiring, projection, provider, API, UI, materializer, recommendation,
+action, AI, or Kernel concept. Financial Ledger and Reconciliation remain
+separate sovereign boundaries.
+
+### Implementation authorization
+
+TASK-0143 is limited to seven files enumerated by SPEC-0042 and 38 required
+behaviors. If exact replay cannot be implemented without changing the accepted
+TASK-0140 aggregate, implementation must stop for contract correction.
+
+### Next objective
+
+Implement and validate TASK-0143, then re-read canonical `main` before any P0.3
+fast projection or live provider work.
+
 ## Journal update template
 
 Each completed convergence task appends:
