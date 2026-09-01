@@ -299,6 +299,37 @@ TASK-0140 aggregate, implementation must stop for contract correction.
 Implement and validate TASK-0143, then re-read canonical `main` before any P0.3
 fast projection or live provider work.
 
+## 2026-08-31 - TASK-0143 outbox contract correction
+
+### Trigger
+
+Implementation preparation after PR #137 inspected the actual V002/V005
+outbox schema and delivery serializer. The accepted contract assumed a generic
+outbox that did not yet exist.
+
+### Finding
+
+`assessment_id` was mandatory, database checks admitted only inventory-risk
+events, delivery canonicalization retained only inventory-risk fields, and the
+SPEC-0042 content type conflicted with the stored CloudEvents envelope contract.
+
+### Decision
+
+Stopped production implementation before commit. Accepted ADR-0044 and
+SPEC-0043 to generalize the single outbox by explicit event type, preserve
+inventory-risk byte compatibility, add the exact evidence CloudEvent family,
+and reject arbitrary JSON or unknown event types.
+
+### Scope protection
+
+No schema, runtime, provider, API, UI, projection, materializer, Ledger,
+Reconciliation, action, AI, or Kernel behavior changed in TASK-0143.
+
+### Next objective
+
+Implement TASK-0144 within the corrected nine-file scope and all combined
+SPEC-0042/SPEC-0043 quality gates.
+
 ## Journal update template
 
 Each completed convergence task appends:
