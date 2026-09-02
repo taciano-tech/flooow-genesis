@@ -330,6 +330,74 @@ Reconciliation, action, AI, or Kernel behavior changed in TASK-0143.
 Implement TASK-0144 within the corrected nine-file scope and all combined
 SPEC-0042/SPEC-0043 quality gates.
 
+## 2026-09-01 - TASK-0144 durable independent economic evidence
+
+### Objective
+
+Persist independent marketplace economic evidence as an append-only,
+organization-isolated journal with exact domain replay and a durable monotonic
+cursor, without widening the production outbox boundary.
+
+### Repository state before
+
+- TASK-0140 supplied the immutable provider-neutral evidence aggregate;
+- ADR-0045 and SPEC-0044 superseded the proposed outbox generalization with an
+  organization-scoped `change_sequence` design;
+- no accepted durable repository port, V015 schema, or PostgreSQL adapter yet
+  existed on `main`.
+
+### Decision
+
+Delivered TASK-0144 in three reviewed slices: persistence contract, PostgreSQL
+journal, and PostgreSQL adapter. The database owns `change_sequence`; the
+adapter reconstructs state through the canonical domain merger and keeps
+duplicate, conflict, lifecycle, and optimistic-version outcomes explicit.
+
+### Changes delivered
+
+- narrow persistence contract and redacted version encoding bridge;
+- V015 append-only evidence schema and per-organization change sequencing;
+- transactional PostgreSQL apply and repeatable-read reconstruction;
+- correction history, organization isolation, rollback safety, and
+  deterministic replay;
+- bounded full-transaction retry for PostgreSQL `40P01` and `40001`;
+- candidate-root collision handling through `ON CONFLICT DO NOTHING`, fixing
+  the observed `23505` race without weakening subsequent locked validation;
+- TASK-0144 evidence report.
+
+### Tests and validation
+
+- persistence contract and JVM surface checks: passed;
+- V015 structural suite: 6/6 passed against PostgreSQL/Testcontainers;
+- final adapter suite: 15/15 passed, 0 failed, 0 skipped against real
+  PostgreSQL/Testcontainers;
+- Flyway V001-V015 application and `git diff --check`: passed locally;
+- PR and CI remain pending; no commit or push was performed at this checkpoint.
+
+### Risks and debt discovered
+
+Concurrent testing exposed and closed a deadlock/serialization retry gap and a
+candidate-root unique-constraint collision. Durable evidence is still not a
+fast projection, Economic Truth materialization, Financial Ledger entry, or
+Reconciliation result, and no live provider supplies it yet.
+
+### Roadmap impact
+
+P0.2 now has a durable, resumable evidence journal suitable for a future
+projection checkpoint query. TASK-0144 does not authorize P0.3, provider, API,
+UI, outbox, Ledger, Reconciliation, automation, or Kernel work.
+
+### Scope protection
+
+Exactly the seven SPEC-0044 files changed. No eighth file, existing migration,
+outbox runtime, dependency, provider, API, UI, projection, Ledger,
+Reconciliation, or Kernel file was touched.
+
+### Next objective
+
+Complete commit, PR, CI, and merge review for TASK-0144. Only after canonical
+`main` is updated should the next eligible roadmap increment be derived.
+
 ## Journal update template
 
 Each completed convergence task appends:
