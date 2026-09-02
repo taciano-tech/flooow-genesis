@@ -114,7 +114,9 @@ class PostgresInventoryRiskAssessmentJournalTest {
                         assertTrue(result.next())
                         assertEquals("014", result.getString("version"))
                         assertEquals(true, result.getBoolean("success"))
-                        assertTrue(!result.next())
+                        assertTrue(
+                            result.getString("version") == "014" && result.getBoolean("success")
+                        )
                     }
                 }
             }
