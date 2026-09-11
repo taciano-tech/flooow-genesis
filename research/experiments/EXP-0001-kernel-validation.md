@@ -1,6 +1,6 @@
 # EXP-0001 — Kernel Validation
 
-**Status:** Planned
+**Status:** Completed
 
 **Protocol Version:** 1.0
 
@@ -75,6 +75,18 @@ The experiment must exercise the Kernel concepts currently identified as necessa
 
 No additional primitive may be introduced during the experiment without first recording evidence of insufficiency.
 
+### Protocol Amendment
+
+Repository inspection established that `Entity`, `Event`, `State`, and
+`Process` are not present in the executable Kernel baseline. Their documentary
+statuses also differ: `Entity` and `State` are draft candidates, `Event` is an
+open question, and `Process` is not listed as a candidate in the draft
+ontology.
+
+`EXP-0001-PROTOCOL-AMENDMENT-001.md` separates the executable reasoning slice
+from workflow ontology validation. Future evidence must follow that amendment
+and must not treat application-defined substitutes as Kernel primitives.
+
 ---
 
 ## 9. Independent Variables
@@ -131,6 +143,11 @@ The experiment shall:
 9. compare all resulting states, events, and decisions.
 
 The application must not contain alternative abstractions that duplicate Kernel responsibilities.
+
+The workflow-specific steps above remain design targets rather than completed
+executable measures. Their implementation is governed by
+`EXP-0001-PROTOCOL-AMENDMENT-001.md` because the referenced workflow concepts
+are absent from the current Kernel API.
 
 ---
 
@@ -257,34 +274,123 @@ During the experiment:
 
 To be completed when the experiment begins.
 
-- **Source commit:** Pending
-- **Execution date:** Pending
-- **Executor:** Pending
-- **Environment:** Pending
-- **Build result:** Pending
-- **Test result:** Pending
-- **Evidence location:** Pending
+- **Source commit:** The commit containing this execution record
+- **Execution date:** 2026-08-04
+- **Executor:** Codex, supervised by the repository owner
+- **Environment:** Windows, JVM toolchain 21, Gradle 9.4.0
+- **Build result:** Success (`gradlew.bat build --no-daemon`)
+- **Test result:** 63 tests passed; 0 failed; 0 skipped
+- **Evidence location:** `applications/marketplace-operations/src/test` and
+  `applications/marketplace-operations/src/test/resources/exp-0001`
+
+### Initial Vertical Slice Observation
+
+The Marketplace Operations application represented the Red Moto inventory-risk
+scenario without modifying the Kernel. The execution produced explicit
+observations, evidence, a deterministic judgment, calculated inventory
+projections, intervention alternatives, a recommendation, expected impact, and
+a calculation trace.
+
+Twelve application tests demonstrated:
+
+- explicit stock coverage, stockout date, shortage duration, and goal exposure;
+- traceability from observations and evidence to the recommendation;
+- preservation of the complete Observation → Evidence → Hypothesis → Judgment
+  → Decision chain through `EvaluationResult` and `DecisionContext`;
+- identical results for identical inputs;
+- no intervention when replenishment precedes the projected stockout;
+- rejection of invalid operational inputs.
+- explicit behavior for zero inventory and partial-day coverage;
+- absence of a gap when replenishment coincides with stockout;
+- shortage exposure capped at the commercial period boundary;
+- separation between physical stockout and risk to an already achieved goal;
+- reproduction of the canonical fixture against committed semantic evidence.
+- cross-platform snapshot comparison independent of operating-system line endings.
+
+This is initial evidence only. Independent replication and the remaining
+experiment evaluation are required before an architectural conclusion.
+
+The controlled replication package and independent procedure are documented in
+`research/experiments/EXP-0001-REPLICATION.md`. Their preparation does not fill
+or satisfy the independent replication record below.
+
+### Track B Initial Execution
+
+The RFC-0003 operational design was exercised with application-owned SKU
+identity, immutable inventory snapshots, inventory commands, accepted
+occurrences, and typed rejected transitions. The implementation consumed
+existing Kernel `Identifier`, `Timestamp`, `Action`, and `Outcome` contracts and
+did not modify the Kernel or introduce universal `Entity`, `State`, `Event`, or
+`Process` types.
+
+The initial scenarios demonstrate deterministic receipt and consumption,
+identity preservation, forward-only temporal transitions, rejection of
+over-consumption, unchanged input snapshots after rejection, complete
+transition traces, and separation of intervention, expected impact, and
+observed outcome. The complete repository build passed with 70 tests and no
+failures, errors, or skipped tests. This is Track B evidence for the Marketplace
+Operations workflow only; it does not promote an ontology candidate or complete
+EXP-0001.
+
+The controlled Track B fixture, expected semantic snapshot, and independent
+procedure are documented in `EXP-0001-TRACK-B-REPLICATION.md`. Package
+preparation and implementation-time execution do not satisfy the independent
+replication requirement. After adding the controlled comparison, the complete
+repository build passed with 71 tests and no failures, errors, or skipped tests.
+
+### Evaluation History
+
+The collected evidence is assessed against every success criterion in
+`research/experiments/EXP-0001-INTERIM-EVALUATION.md`. Before independent
+replication, the assessment supported eight of nine criteria and retained the
+interim disposition **Continue Investigation**. Replication 001 subsequently
+provided the ninth criterion; the same report now records the final disposition
+**Preserve the Kernel**.
 
 ---
 
 ## 22. Replication Record
 
-To be completed after independent replication.
+Independent replication was executed from the frozen post-Track B evaluation
+baseline. The complete record, commands, environment, task provenance, and
+warnings are preserved in `EXP-0001-INDEPENDENT-REPLICATION-001.md`.
 
-- **Replication commit:** Pending
-- **Replication date:** Pending
-- **Replicator:** Pending
-- **Result:** Pending
-- **Observed divergences:** Pending
+- **Replication commit:** `effa2c1ed44d8ca70468eda04f6e09184d19c9d6`
+- **Replication date:** 2026-08-04
+- **Replicator:** OpenAI Codex independent replicator
+- **Track A result:** Successful; 1 of 1 canonical comparison passed
+- **Track B result:** Successful; 1 of 1 fresh canonical comparison passed
+- **Complete build:** Successful; 71 of 71 fresh tests passed
+- **Observed semantic divergences:** None
+- **Environment warnings:** Kotlin daemon and Gradle home access limitations;
+  documented fallbacks completed successfully
 
 ---
 
 ## 23. Final Result
 
-Pending experimental execution.
+**Successful within the declared experimental scope.**
+
+All nine success criteria are supported for the accepted Marketplace Operations
+baseline. Independent Track A and fresh Track B comparisons matched their
+committed semantic snapshots, the fresh complete build passed 71 of 71 tests,
+and no semantic divergence was observed.
+
+This result demonstrates sufficiency for this workflow. It does not establish
+universal sufficiency across other domains, production environments, or
+unexercised ontology candidates.
 
 ---
 
 ## 24. Architectural Decision
 
-Pending evidence collection and independent replication.
+**Preserve the current Kernel.**
+
+The experiment did not demonstrate a missing universal concept. Marketplace
+identity, temporal projections, occurrences, and workflow execution remained
+application-owned while existing Kernel language, reasoning, `Action`, and
+`Outcome` contracts were sufficient for the accepted baseline.
+
+No new Kernel primitive is authorized, and no draft ontology candidate is
+promoted by this decision. A future experiment may reopen Kernel evolution only
+with new evidence satisfying the repository's RFC and governance rules.

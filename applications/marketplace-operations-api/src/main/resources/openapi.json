@@ -1,0 +1,792 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Flooow Marketplace Operations API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/integrations/mercadolivre/oauth/start": {
+      "get": {
+        "operationId": "startMercadoLivreOAuth",
+        "security": [{ "serviceBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Server-side authorization URL",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OAuthStartResponse" } } }
+          },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "500": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/integrations/mercadolivre/oauth/callback": {
+      "get": {
+        "operationId": "completeMercadoLivreOAuth",
+        "parameters": [
+          { "name": "code", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "state", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Connection activated" },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "500": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/integrations/mercadolivre/credential/rotate": {
+      "post": {
+        "operationId": "rotateMercadoLivreCredential",
+        "security": [{ "serviceBearer": [] }],
+        "description": "Executes governed Mercado Livre OAuth credential assessment and rotation for the server-configured active connection. No credential material is accepted from or returned to the caller.",
+        "responses": {
+          "200": {
+            "description": "Credential is usable or was rotated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["status", "provider"],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["READY", "ROTATED", "ROTATED_CLEANUP_REQUIRED"]
+                    },
+                    "provider": {
+                      "type": "string",
+                      "const": "br.com.mercadolivre"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/integrations/omie/bootstrap": {
+      "post": {
+        "operationId": "bootstrapOmieCredential",
+        "security": [{ "serviceBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OmieBootstrapRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Omie credential bound to an active connection",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OmieBootstrapResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "415": { "$ref": "#/components/responses/Problem" },
+          "500": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/commerce-identity/omie/refresh": {
+      "post": {
+        "operationId": "refreshOmieTransactionEvidence",
+        "security": [{ "serviceBearer": [] }],
+        "description": "Read-only bounded Omie ListarPedidos ingestion. Organization and connection are selected server-side.",
+        "responses": {
+          "200": {
+            "description": "Evidence refresh operational metadata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OmieEvidenceRefreshResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/commerce-identity/omie/reacquire": {
+      "post": {
+        "operationId": "reacquireOmieTransactionEvidence",
+        "security": [{ "serviceBearer": [] }],
+        "description": "Explicit read-only Omie evidence reacquisition using the governed versioned capability. Historical observations are preserved.",
+        "responses": {
+          "200": { "description": "Evidence reacquisition operational metadata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OmieEvidenceRefreshResponse" } } } },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/commerce-identity/recompute": {
+      "post": {
+        "operationId": "recomputeCommerceIdentityHealth",
+        "security": [{ "serviceBearer": [] }],
+        "description": "Recomputes read-only identity health from persisted Mercado Livre and Omie evidence. Organization is derived from the authenticated principal.",
+        "responses": {
+          "200": {
+            "description": "Identity health recomputation metadata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CommerceIdentityRecomputeResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/commerce-identity/product-decisions": {
+      "post": {
+        "operationId": "recordCrossSystemProductIdentityDecision",
+        "security": [{ "serviceBearer": [] }],
+        "description": "Records append-only explicit confirmation or rejection evidence. Organization and both provider connections are selected server-side; text equality is not confirmation.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductIdentityDecisionRequest" } } } },
+        "responses": {
+          "201": { "description": "Decision appended", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductIdentityDecision" } } } },
+          "200": { "description": "Idempotent replay", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductIdentityDecision" } } } },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "409": { "$ref": "#/components/responses/Problem" },
+          "422": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/commerce-identity/product-decisions/{decisionId}": {
+      "get": {
+        "operationId": "readCrossSystemProductIdentityDecision",
+        "security": [{ "serviceBearer": [] }],
+        "parameters": [{ "name": "decisionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Organization-scoped immutable decision", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductIdentityDecision" } } } },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "404": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/marketplace-operations/inventory-risk-assessments": {
+      "post": {
+        "operationId": "assessInventoryRisk",
+        "security": [{ "serviceBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/InventoryRiskRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Durable inventory-risk assessment created",
+            "headers": {
+              "Location": {
+                "schema": { "type": "string" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InventoryRiskResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "415": { "$ref": "#/components/responses/Problem" },
+          "422": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" },
+          "500": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/marketplace-operations/inventory-risk-assessments/{assessmentId}": {
+      "get": {
+        "operationId": "getInventoryRiskAssessment",
+        "security": [{ "serviceBearer": [] }],
+        "parameters": [
+          {
+            "name": "assessmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Persisted inventory-risk assessment",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InventoryRiskResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "404": { "$ref": "#/components/responses/Problem" },
+          "500": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/sales-intelligence/refresh": {
+      "post": {
+        "operationId": "refreshSalesIntelligence",
+        "security": [{ "serviceBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Bounded live refresh completed",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SalesIntelligenceRefresh" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "409": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" },
+          "500": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/sales-intelligence/reacquire": {
+      "post": {
+        "operationId": "reacquireSalesIntelligenceEvidence",
+        "security": [{ "serviceBearer": [] }],
+        "description": "Explicit read-only Mercado Livre evidence reacquisition using a versioned capability. Historical observations are preserved.",
+        "responses": {
+          "200": { "description": "Evidence reacquisition operational metadata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SalesIntelligenceRefresh" } } } },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "409": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/sales-intelligence/orders": {
+      "get": {
+        "operationId": "listSalesIntelligenceOrders",
+        "security": [{ "serviceBearer": [] }],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Opaque authenticated continuation cursor"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Organization-scoped Sales Intelligence page",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SalesIntelligencePage" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/sales-intelligence/orders/{marketplaceOrderId}": {
+      "get": {
+        "operationId": "getSalesIntelligenceOrder",
+        "security": [{ "serviceBearer": [] }],
+        "parameters": [
+          {
+            "name": "marketplaceOrderId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current durable Sales Intelligence projection",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SalesIntelligenceOrder" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "404": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/reconciliation/cases": {
+      "get": {
+        "operationId": "listReconciliationCases",
+        "security": [{ "serviceBearer": [] }],
+        "parameters": [
+          { "name": "cursor", "in": "query", "schema": { "type": "string" }, "description": "Opaque organization-bound continuation cursor" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "Organization-scoped reconciliation cases", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReconciliationCasePage" } } } },
+          "400": { "$ref": "#/components/responses/Problem" }, "401": { "$ref": "#/components/responses/Problem" }, "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/reconciliation/cases/{caseId}": {
+      "get": {
+        "operationId": "getReconciliationCase",
+        "security": [{ "serviceBearer": [] }],
+        "parameters": [{ "name": "caseId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Durable reconciliation case", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReconciliationCase" } } } },
+          "400": { "$ref": "#/components/responses/Problem" }, "401": { "$ref": "#/components/responses/Problem" }, "404": { "$ref": "#/components/responses/Problem" }, "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/reconciliation/systemic-divergences": {
+      "get": {
+        "operationId": "listSystemicDivergences",
+        "security": [{ "serviceBearer": [] }],
+        "parameters": [
+          { "name": "cursor", "in": "query", "schema": { "type": "string" }, "description": "Opaque organization-bound continuation cursor" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "Organization-scoped systemic divergence signals" },
+          "400": { "$ref": "#/components/responses/Problem" }, "401": { "$ref": "#/components/responses/Problem" }, "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/reconciliation/systemic-divergences/{signalId}": {
+      "get": {
+        "operationId": "getSystemicDivergence",
+        "security": [{ "serviceBearer": [] }],
+        "parameters": [{ "name": "signalId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Derived systemic divergence signal" },
+          "400": { "$ref": "#/components/responses/Problem" }, "401": { "$ref": "#/components/responses/Problem" }, "404": { "$ref": "#/components/responses/Problem" }, "503": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "liveness",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Process is live",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Health" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "readiness",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Process is ready",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Health" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "openApiDocument",
+        "security": [{ "serviceBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Committed OpenAPI 3.1 contract",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "serviceBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "responses": {
+      "Problem": {
+        "description": "Problem detail",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/Problem" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ProductIdentityDecisionRequest": {
+        "type": "object", "additionalProperties": false,
+        "required": ["decisionId", "correlationId", "decision", "mercadoLivreItemId", "mercadoLivreSellerSku", "omieProviderProductId", "reason", "provenance"],
+        "properties": {
+          "decisionId": { "type": "string", "format": "uuid" },
+          "correlationId": { "type": "string", "format": "uuid" },
+          "decision": { "type": "string", "enum": ["CONFIRMED", "REJECTED"] },
+          "mercadoLivreItemId": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "mercadoLivreSellerSku": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "omieProviderProductId": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "reason": { "type": "string", "enum": ["EXPLICIT_CONFIRMATION", "EXPLICIT_REJECTION", "CORRECTION"] },
+          "provenance": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "supersedesDecisionId": { "type": "string", "format": "uuid" }
+        }
+      },
+      "ProductIdentityDecision": {
+        "type": "object", "additionalProperties": false,
+        "required": ["decisionId", "decision", "revision", "mercadoLivreItemId", "mercadoLivreSellerSku", "omieProviderProductId", "reason", "correlationId", "decidedAt"],
+        "properties": {
+          "decisionId": { "type": "string", "format": "uuid" },
+          "decision": { "type": "string", "enum": ["CONFIRMED", "REJECTED"] },
+          "revision": { "type": "integer", "minimum": 1 },
+          "supersedesDecisionId": { "type": "string", "format": "uuid" },
+          "mercadoLivreItemId": { "type": "string" },
+          "mercadoLivreSellerSku": { "type": "string" },
+          "omieProviderProductId": { "type": "string" },
+          "reason": { "type": "string", "enum": ["EXPLICIT_CONFIRMATION", "EXPLICIT_REJECTION", "CORRECTION"] },
+          "correlationId": { "type": "string", "format": "uuid" },
+          "decidedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "OAuthStartResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["authorizationUrl"],
+        "properties": { "authorizationUrl": { "type": "string", "format": "uri" } }
+      },
+      "OmieBootstrapRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["appKey", "appSecret"],
+        "properties": {
+          "appKey": { "type": "string", "minLength": 1 },
+          "appSecret": { "type": "string", "minLength": 1 }
+        }
+      },
+      "OmieBootstrapResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "connectionId"],
+        "properties": {
+          "status": { "type": "string", "const": "READY" },
+          "connectionId": { "type": "string", "format": "uuid" }
+        }
+      },
+      "OmieEvidenceRefreshResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "connectionStatus", "invocations", "committedPages", "alreadyCommittedPages", "records"],
+        "properties": {
+          "status": { "type": "string", "const": "COMPLETED" },
+          "connectionStatus": { "type": "string", "const": "ACTIVE" },
+          "invocations": { "type": "integer", "minimum": 1 },
+          "committedPages": { "type": "integer", "minimum": 0 },
+          "alreadyCommittedPages": { "type": "integer", "minimum": 0 },
+          "records": { "type": "integer", "minimum": 0 }
+          ,"acquisitionGeneration": { "type": "string" }
+        }
+      },
+      "CommerceIdentityRecomputeResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "mlTransactionsInspected", "mlPersistedRows", "mlSellerSkuRows", "mlUsableAmountDateRows", "omieTransactionsInspected", "omiePersistedRows", "omieIdentityEvaluableRows", "omieNonEvaluableRows", "omieIntegrationReferenceRows", "omieCustomerOrderReferenceRows", "omieProductEvidenceRows", "omieAmountEvidenceRows", "omieExplicitMarketplaceOrderReferenceRows", "exactConfirmed", "candidate", "ambiguous", "conflict", "unresolved", "policyVersion", "evaluatedAt"],
+        "properties": {
+          "status": { "type": "string", "const": "COMPLETED" },
+          "mlTransactionsInspected": { "type": "integer", "minimum": 0 },
+          "mlPersistedRows": { "type": "integer", "minimum": 0 },
+          "mlSellerSkuRows": { "type": "integer", "minimum": 0 },
+          "mlUsableAmountDateRows": { "type": "integer", "minimum": 0 },
+          "omieTransactionsInspected": { "type": "integer", "minimum": 0 },
+          "omiePersistedRows": { "type": "integer", "minimum": 0 },
+          "omieIdentityEvaluableRows": { "type": "integer", "minimum": 0 },
+          "omieNonEvaluableRows": { "type": "integer", "minimum": 0 },
+          "omieIntegrationReferenceRows": { "type": "integer", "minimum": 0 },
+          "omieCustomerOrderReferenceRows": { "type": "integer", "minimum": 0 },
+          "omieProductEvidenceRows": { "type": "integer", "minimum": 0 },
+          "omieAmountEvidenceRows": { "type": "integer", "minimum": 0 },
+          "omieExplicitMarketplaceOrderReferenceRows": { "type": "integer", "minimum": 0 },
+          "exactConfirmed": { "type": "integer", "minimum": 0 },
+          "candidate": { "type": "integer", "minimum": 0 },
+          "ambiguous": { "type": "integer", "minimum": 0 },
+          "conflict": { "type": "integer", "minimum": 0 },
+          "unresolved": { "type": "integer", "minimum": 0 },
+          "coveragePercentage": { "type": "string" },
+          "policyVersion": { "type": "string" },
+          "evaluatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "InventoryRiskRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sku",
+          "periodEnd",
+          "targetUnits",
+          "unitsSold",
+          "availableUnits",
+          "dailySalesVelocity",
+          "observedOn",
+          "expectedReplenishmentOn"
+        ],
+        "properties": {
+          "sku": { "type": "string", "minLength": 1 },
+          "periodEnd": { "type": "string", "format": "date" },
+          "targetUnits": { "type": "integer", "minimum": 1 },
+          "unitsSold": { "type": "integer", "minimum": 0 },
+          "availableUnits": { "type": "integer", "minimum": 0 },
+          "dailySalesVelocity": { "type": "integer", "minimum": 1 },
+          "observedOn": { "type": "string", "format": "date" },
+          "expectedReplenishmentOn": { "type": "string", "format": "date" }
+        }
+      },
+      "InventoryRiskResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["assessmentId", "recordedAt", "sku", "observedOn", "projection", "recommendation", "expectedImpact", "trace"],
+        "properties": {
+          "assessmentId": { "type": "string", "format": "uuid" },
+          "recordedAt": { "type": "string", "format": "date-time" },
+          "sku": { "type": "string" },
+          "observedOn": { "type": "string", "format": "date" },
+          "projection": { "$ref": "#/components/schemas/InventoryProjection" },
+          "recommendation": { "$ref": "#/components/schemas/Recommendation" },
+          "expectedImpact": { "type": "string" },
+          "trace": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "InventoryProjection": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "stockCoverageDays",
+          "projectedStockoutOn",
+          "expectedReplenishmentOn",
+          "projectedStockoutDays",
+          "unitsPotentiallyUnavailable",
+          "unitsRemainingToGoal",
+          "unitsAtRiskAgainstGoal",
+          "shortageProjected"
+        ],
+        "properties": {
+          "stockCoverageDays": { "type": "integer" },
+          "projectedStockoutOn": { "type": "string", "format": "date" },
+          "expectedReplenishmentOn": { "type": "string", "format": "date" },
+          "projectedStockoutDays": { "type": "integer" },
+          "unitsPotentiallyUnavailable": { "type": "integer" },
+          "unitsRemainingToGoal": { "type": "integer" },
+          "unitsAtRiskAgainstGoal": { "type": "integer" },
+          "shortageProjected": { "type": "boolean" }
+        }
+      },
+      "Recommendation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "explanation", "expectedUnitsPreserved"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["EXPEDITE_REPLENISHMENT", "REDUCE_PROMOTIONAL_EXPOSURE", "TAKE_NO_ACTION"]
+          },
+          "explanation": { "type": "string" },
+          "expectedUnitsPreserved": { "type": "integer" }
+        }
+      },
+      "SalesIntelligencePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["orders"],
+        "properties": {
+          "orders": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SalesIntelligenceOrder" }
+          },
+          "nextCursor": { "type": "string" }
+        }
+      },
+      "SalesIntelligenceOrder": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "marketplaceOrderId",
+          "sourceEvidenceVersion",
+          "projectedAt",
+          "assemblyPolicyVersion",
+          "state"
+        ],
+        "properties": {
+          "marketplaceOrderId": { "type": "string", "format": "uuid" },
+          "sourceEvidenceVersion": { "type": "integer", "minimum": 0 },
+          "projectedAt": { "type": "string", "format": "date-time" },
+          "assemblyPolicyVersion": { "type": "string" },
+          "calculationPolicyVersion": { "type": "string" },
+          "state": {
+            "type": "string",
+            "enum": ["UNRESOLVED", "CALCULATED_COMPLETE", "CALCULATED_INCOMPLETE"]
+          },
+          "unresolvedReasons": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "missingComponentTypes": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "partialComponentTypes": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "economicResult": { "$ref": "#/components/schemas/SafeEconomicResult" }
+        }
+      },
+      "SafeEconomicResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "orderOccurredAt",
+          "currency",
+          "grossRevenue",
+          "totalMarketplaceFees",
+          "totalShipping",
+          "totalAdvertising",
+          "totalTaxes",
+          "totalProductCost",
+          "totalFinancialCost",
+          "totalOtherAdjustments",
+          "contribution",
+          "truthQuality"
+        ],
+        "properties": {
+          "orderOccurredAt": { "type": "string", "format": "date-time" },
+          "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+          "grossRevenue": { "type": "string" },
+          "totalMarketplaceFees": { "type": "string" },
+          "totalShipping": { "type": "string" },
+          "totalAdvertising": { "type": "string" },
+          "totalTaxes": { "type": "string" },
+          "totalProductCost": { "type": "string" },
+          "totalFinancialCost": { "type": "string" },
+          "totalOtherAdjustments": { "type": "string" },
+          "contribution": { "type": "string" },
+          "contributionMargin": { "type": "string" },
+          "contributionMarginUndefinedReason": { "type": "string" },
+          "truthQuality": { "type": "string", "enum": ["CONFIRMED", "ESTIMATED"] }
+        }
+      },
+      "SalesIntelligenceRefresh": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "source", "occurrence", "revenue", "projection"],
+        "properties": {
+          "status": { "type": "string", "const": "COMPLETED" },
+          "source": { "$ref": "#/components/schemas/RefreshSourceSummary" },
+          "occurrence": { "$ref": "#/components/schemas/RefreshPromotionSummary" },
+          "revenue": { "$ref": "#/components/schemas/RefreshPromotionSummary" },
+          "projection": { "$ref": "#/components/schemas/RefreshProjectionSummary" }
+        }
+      },
+      "ReconciliationCasePage": {
+        "type": "object", "additionalProperties": false, "required": ["cases"],
+        "properties": { "cases": { "type": "array", "items": { "$ref": "#/components/schemas/ReconciliationCase" } }, "nextCursor": { "type": "string" } }
+      },
+      "ReconciliationCase": {
+        "type": "object", "additionalProperties": false,
+        "required": ["caseId", "marketplaceOrderId", "financialTraceId", "policyVersion", "currency", "status", "openedAt", "lastObservedAt", "revision", "absoluteDifferenceSummary", "evidenceEntryIds", "stages"],
+        "properties": {
+          "caseId": { "type": "string", "format": "uuid" }, "marketplaceOrderId": { "type": "string", "format": "uuid" }, "financialTraceId": { "type": "string", "format": "uuid" }, "policyVersion": { "type": "string" }, "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }, "status": { "type": "string", "enum": ["OPEN", "ACKNOWLEDGED", "RESOLVED"] }, "openedAt": { "type": "string", "format": "date-time" }, "lastObservedAt": { "type": "string", "format": "date-time" }, "resolvedAt": { "type": "string", "format": "date-time" }, "revision": { "type": "integer", "minimum": 1 }, "absoluteDifferenceSummary": { "$ref": "#/components/schemas/ExactMoney" }, "evidenceEntryIds": { "type": "array", "items": { "type": "string", "format": "uuid" } }, "stages": { "type": "array", "items": { "$ref": "#/components/schemas/ReconciliationStageDifference" } }
+        }
+      },
+      "ReconciliationStageDifference": {
+        "type": "object", "additionalProperties": false, "required": ["stage", "tolerance", "expectedEntryIds", "actualEntryIds"],
+        "properties": { "stage": { "type": "string" }, "expected": { "$ref": "#/components/schemas/ExactMoney" }, "actual": { "$ref": "#/components/schemas/ExactMoney" }, "signedDifference": { "$ref": "#/components/schemas/ExactMoney" }, "absoluteDifference": { "$ref": "#/components/schemas/ExactMoney" }, "tolerance": { "$ref": "#/components/schemas/ExactMoney" }, "expectedEntryIds": { "type": "array", "items": { "type": "string", "format": "uuid" } }, "actualEntryIds": { "type": "array", "items": { "type": "string", "format": "uuid" } } }
+      },
+      "ExactMoney": {
+        "type": "object", "additionalProperties": false, "required": ["currency", "amount"], "properties": { "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }, "amount": { "type": "string" } }
+      },
+      "RefreshSourceSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "invocations", "committedPages", "alreadyCommittedPages", "records"],
+        "properties": {
+          "status": { "type": "string", "enum": ["EXHAUSTED", "BOUNDED", "RETRYABLE_FAILURE", "FAILED"] },
+          "invocations": { "type": "integer", "minimum": 0 },
+          "committedPages": { "type": "integer", "minimum": 0 },
+          "alreadyCommittedPages": { "type": "integer", "minimum": 0 },
+          "records": { "type": "integer", "minimum": 0 }
+          ,"failureCategory": { "type": "string" },
+          "retryable": { "type": "boolean" }
+        }
+      },
+      "RefreshPromotionSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["batches", "examined", "promoted", "duplicates", "identityConflicts", "evidenceConflicts", "drained"],
+        "properties": {
+          "batches": { "type": "integer", "minimum": 0 },
+          "examined": { "type": "integer", "minimum": 0 },
+          "promoted": { "type": "integer", "minimum": 0 },
+          "duplicates": { "type": "integer", "minimum": 0 },
+          "identityConflicts": { "type": "integer", "minimum": 0 },
+          "evidenceConflicts": { "type": "integer", "minimum": 0 },
+          "drained": { "type": "boolean" }
+        }
+      },
+      "RefreshProjectionSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["batches", "processedChanges", "drained"],
+        "properties": {
+          "batches": { "type": "integer", "minimum": 0 },
+          "processedChanges": { "type": "integer", "minimum": 0 },
+          "drained": { "type": "boolean" }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "title", "status", "detail", "instance", "code"],
+        "properties": {
+          "type": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "status": { "type": "integer" },
+          "detail": { "type": "string" },
+          "instance": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      },
+      "Health": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status"],
+        "properties": {
+          "status": { "type": "string", "const": "UP" }
+        }
+      }
+    }
+  }
+}

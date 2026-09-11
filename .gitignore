@@ -1,5 +1,6 @@
 # Gradle
 .gradle/
+.kotlin/
 **/.gradle/
 
 # Build outputs
@@ -16,3 +17,6 @@ build/
 
 # Windows
 Thumbs.db
+
+# Deployment-owned frontend runtime configuration
+applications/economic-decision-room-web/public/runtime-config.local.js
